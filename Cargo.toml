@@ -1,0 +1,63 @@
+[package]
+name = "visionkit-rs"
+version = "0.1.0"
+edition = "2021"
+autotests = false
+license = "MIT OR Apache-2.0"
+homepage = "https://github.com/doom-fish/visionkit-rs"
+repository = "https://github.com/doom-fish/visionkit-rs"
+description = "Safe Rust bindings for VisionKit.framework — Live Text image analysis on macOS"
+authors = ["Per Johansson <per@doom.fish>"]
+keywords = ["visionkit", "ocr", "macos", "apple", "vision"]
+categories = ["api-bindings", "os::macos-apis", "multimedia::images"]
+rust-version = "1.76"
+readme = "README.md"
+build = "build.rs"
+include = [
+    "src/**/*",
+    "swift-bridge/Package.swift",
+    "swift-bridge/Sources/**/*",
+    "examples/**/*",
+    "tests/**/*",
+    "build.rs",
+    "Cargo.toml",
+    "README.md",
+    "LICENSE-*",
+    "CHANGELOG.md",
+]
+
+[lints.rust]
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+
+[lib]
+name = "visionkit"
+crate-type = ["lib"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[package.metadata.docs.rs]
+all-features = true
+default-target = "aarch64-apple-darwin"
+targets = ["aarch64-apple-darwin", "x86_64-apple-darwin"]
+rustdoc-args = ["--cfg", "docsrs"]
+
+[badges]
+maintenance = { status = "actively-developed" }
+
+[[example]]
+name = "02_framework_smoke"
+
+[[test]]
+name = "api_coverage"
+path = "tests/api_coverage.rs"
+harness = false
+
+[profile.release]
+debug = "full"
+strip = "none"

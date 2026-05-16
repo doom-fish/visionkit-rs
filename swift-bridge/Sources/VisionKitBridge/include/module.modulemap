@@ -1,0 +1,4 @@
+module VisionKitBridge [system] {
+    header "VisionKitBridge.h"
+    export *
+}
