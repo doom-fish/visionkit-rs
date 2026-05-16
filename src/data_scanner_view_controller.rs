@@ -1,0 +1,42 @@
+use core::ffi::c_char;
+use core::ptr;
+
+use crate::error::VisionKitError;
+use crate::ffi;
+use crate::private::{error_from_status, parse_area_support_info_ptr};
+use crate::support::AreaSupportInfo;
+
+pub struct DataScannerViewController;
+
+impl DataScannerViewController {
+    pub fn support_info() -> Result<AreaSupportInfo, VisionKitError> {
+        let mut support_json: *mut c_char = ptr::null_mut();
+        let mut err_msg: *mut c_char = ptr::null_mut();
+        let status = unsafe {
+            ffi::data_scanner_view_controller::vk_data_scanner_view_controller_support_json(
+                &mut support_json,
+                &mut err_msg,
+            )
+        };
+        if status == ffi::status::OK {
+            unsafe {
+                parse_area_support_info_ptr(support_json, "DataScannerViewController support info")
+            }
+        } else {
+            Err(unsafe { error_from_status(status, err_msg) })
+        }
+    }
+
+    pub fn is_available_on_current_platform() -> Result<bool, VisionKitError> {
+        Ok(Self::support_info()?.available_on_current_platform)
+    }
+
+    pub fn new() -> Result<Self, VisionKitError> {
+        let info = Self::support_info()?;
+        if info.available_on_current_platform {
+            Ok(Self)
+        } else {
+            Err(info.unavailable_error())
+        }
+    }
+}

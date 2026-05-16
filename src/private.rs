@@ -7,6 +7,7 @@ use serde::Serialize;
 
 use crate::error::VisionKitError;
 use crate::ffi;
+use crate::support::AreaSupportInfo;
 
 pub fn to_cstring(value: &str) -> Result<CString, VisionKitError> {
     CString::new(value).map_err(|_| {
@@ -51,12 +52,22 @@ pub unsafe fn parse_json_ptr<T: DeserializeOwned>(
     })
 }
 
+pub unsafe fn parse_area_support_info_ptr(
+    ptr: *mut c_char,
+    context: &str,
+) -> Result<AreaSupportInfo, VisionKitError> {
+    parse_json_ptr(ptr, context)
+}
+
 pub unsafe fn error_from_status(status: i32, err_msg: *mut c_char) -> VisionKitError {
     let message = take_optional_string(err_msg)
         .unwrap_or_else(|| format!("Swift bridge call failed with status code {status}"));
     match status {
         ffi::status::INVALID_ARGUMENT => VisionKitError::InvalidArgument(message),
         ffi::status::UNAVAILABLE_ON_THIS_MACOS => VisionKitError::UnavailableOnThisMacOS(message),
+        ffi::status::UNAVAILABLE_ON_THIS_PLATFORM => {
+            VisionKitError::UnavailableOnThisPlatform(message)
+        }
         ffi::status::TIMED_OUT => VisionKitError::TimedOut(message),
         ffi::status::ANALYZER_NOT_SUPPORTED => VisionKitError::AnalyzerNotSupported(message),
         ffi::status::FRAMEWORK_ERROR => VisionKitError::Framework(message),

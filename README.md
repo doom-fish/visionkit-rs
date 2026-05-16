@@ -2,7 +2,7 @@
 
 Safe Rust bindings for Apple's `VisionKit.framework` on macOS.
 
-> **Status:** v0.1.0 covers `ImageAnalyzer`, `ImageAnalysis`, text / machine-readable-code / visual-lookup analysis types, OCR language discovery, and file-path based image analysis on macOS.
+> **Status:** v0.2.0 covers `ImageAnalyzer`, `ImageAnalysis`, a headless-friendly `LiveTextInteraction` wrapper over macOS `ImageAnalysisOverlayView`, and ships explicit availability metadata for the iOS-only document-camera / Data Scanner / recognized-item areas.
 
 ## Quick start
 
@@ -24,7 +24,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &configuration,
     )?;
 
-    println!("{}", analysis.transcript()?);
+    let interaction = LiveTextInteraction::new()?;
+    interaction.track_image_at_path("examples/assets/live_text.png")?;
+    interaction.set_analysis(&analysis)?;
+
+    println!("transcript: {}", analysis.transcript()?);
+    println!("live text overlay text: {}", interaction.text()?);
     Ok(())
 }
 ```
@@ -33,24 +38,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 - `ImageAnalyzer::is_supported` and `supported_text_recognition_languages`
 - `ImageAnalyzerConfiguration`, `ImageAnalysisTypes`, and `ImageOrientation`
-- `ImageAnalyzer::analyze_image_at_path`
+- File-path based analysis through every public macOS analyzer overload: URL, `NSImage`, `CGImage`, `CIImage`, and `CVPixelBuffer`
 - `ImageAnalysis::transcript` and `has_results`
+- `LiveTextInteraction` control over macOS `ImageAnalysisOverlayView` state and inspection
+- `VNDocumentCameraViewController`, `DataScannerViewController`, `RecognizedText`, `Barcode`, and `RecognizedItem` availability metadata on macOS
 
 ## Availability
 
-- `ImageAnalyzer` / `ImageAnalysis` are available on macOS 13+.
-- This crate guards the framework at runtime and returns a structured `VisionKitError` when the OS is too old or `ImageAnalyzer` is unsupported on the current Mac.
-- This crate intentionally focuses on the macOS image-analysis APIs and does not expose iOS-only document-camera or Data Scanner surfaces.
+- `ImageAnalyzer`, `ImageAnalysis`, and `LiveTextInteraction` are available on macOS 13+.
+- `LiveTextInteraction::text` and `selected_text` require macOS 14+ because Apple introduced those overlay accessors after macOS 13.
+- `VNDocumentCameraViewController`, `DataScannerViewController`, `RecognizedText`, `Barcode`, and `RecognizedItem` are iOS-only Apple APIs. On macOS, this crate exposes them as structured availability metadata instead of pretending they exist.
 
-## Smoke example
-
-Run the framework smoke example with:
+## Examples
 
 ```bash
-cargo run --all-features --example 02_framework_smoke
+cargo run --example 01_vn_document_camera_view_controller
+cargo run --example 02_framework_smoke
+cargo run --example 03_data_scanner_view_controller
+cargo run --example 04_image_analyzer
+cargo run --example 05_live_text_interaction
+cargo run --example 06_image_analysis
+cargo run --example 07_recognized_text
+cargo run --example 08_barcode
+cargo run --example 09_recognized_item
 ```
 
-It prints analyzer support, OCR languages, analyzes the bundled `examples/assets/live_text.png`, and shows the extracted transcript.
+See [`COVERAGE.md`](COVERAGE.md) for the audited VisionKit API matrix.
 
 ## License
 

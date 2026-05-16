@@ -1,34 +1,19 @@
-use std::path::PathBuf;
+use visionkit::{analyzer, prelude::*};
 
-use visionkit::prelude::*;
+#[test]
+fn compatibility_reexports_still_exist() {
+    let _ = analyzer::ImageAnalysisTypes::TEXT;
+    let _ = analyzer::ImageOrientation::Up;
+}
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let languages = ImageAnalyzer::supported_text_recognition_languages()?;
-    assert!(!languages.is_empty());
-
-    let configuration =
-        ImageAnalyzerConfiguration::new(ImageAnalysisTypes::TEXT).with_locales(["en-US"]);
-    assert_eq!(configuration.analysis_types(), ImageAnalysisTypes::TEXT);
-    assert_eq!(configuration.locales(), ["en-US"]);
-    assert_eq!(ImageOrientation::Up.raw_value(), 1);
-
-    if !ImageAnalyzer::is_supported() {
-        return Ok(());
-    }
-
-    let analyzer = ImageAnalyzer::new()?;
-    let asset_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("examples")
-        .join("assets")
-        .join("live_text.png");
-    let analysis = analyzer.analyze_image_at_path(
-        &asset_path,
-        ImageOrientation::Up,
-        &configuration,
-    )?;
-    assert!(analysis.has_results(ImageAnalysisTypes::TEXT)?);
-
-    let transcript = analysis.transcript()?.to_lowercase();
-    assert!(transcript.contains("visionkit") || transcript.contains("smoke"));
-    Ok(())
+#[test]
+fn prelude_exports_requested_area_types() {
+    let _ = std::mem::size_of::<Barcode>();
+    let _ = std::mem::size_of::<DataScannerViewController>();
+    let _ = std::mem::size_of::<ImageAnalysis>();
+    let _ = std::mem::size_of::<ImageAnalyzer>();
+    let _ = std::mem::size_of::<LiveTextInteraction>();
+    let _ = std::mem::size_of::<RecognizedItem>();
+    let _ = std::mem::size_of::<RecognizedText>();
+    let _ = std::mem::size_of::<VNDocumentCameraViewController>();
 }

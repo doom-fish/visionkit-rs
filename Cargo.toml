@@ -1,12 +1,11 @@
 [package]
 name = "visionkit-rs"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-autotests = false
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/doom-fish/visionkit-rs"
 repository = "https://github.com/doom-fish/visionkit-rs"
-description = "Safe Rust bindings for VisionKit.framework — Live Text image analysis on macOS"
+description = "Safe Rust bindings for VisionKit.framework — image analysis, Live Text, and availability-aware area coverage on macOS"
 authors = ["Per Johansson <per@doom.fish>"]
 keywords = ["visionkit", "ocr", "macos", "apple", "vision"]
 categories = ["api-bindings", "os::macos-apis", "multimedia::images"]
@@ -24,6 +23,7 @@ include = [
     "README.md",
     "LICENSE-*",
     "CHANGELOG.md",
+    "COVERAGE.md",
 ]
 
 [lints.rust]
@@ -49,14 +49,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [badges]
 maintenance = { status = "actively-developed" }
-
-[[example]]
-name = "02_framework_smoke"
-
-[[test]]
-name = "api_coverage"
-path = "tests/api_coverage.rs"
-harness = false
 
 [profile.release]
 debug = "full"

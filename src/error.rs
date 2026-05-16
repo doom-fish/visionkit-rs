@@ -5,6 +5,7 @@ use std::fmt;
 pub enum VisionKitError {
     InvalidArgument(String),
     UnavailableOnThisMacOS(String),
+    UnavailableOnThisPlatform(String),
     TimedOut(String),
     AnalyzerNotSupported(String),
     Framework(String),
@@ -16,6 +17,7 @@ impl fmt::Display for VisionKitError {
         match self {
             Self::InvalidArgument(message)
             | Self::UnavailableOnThisMacOS(message)
+            | Self::UnavailableOnThisPlatform(message)
             | Self::TimedOut(message)
             | Self::AnalyzerNotSupported(message)
             | Self::Framework(message)
