@@ -2,7 +2,7 @@
 
 Safe Rust bindings for Apple's `VisionKit.framework` on macOS.
 
-> **Status:** v0.2.0 covers `ImageAnalyzer`, `ImageAnalysis`, a headless-friendly `LiveTextInteraction` wrapper over macOS `ImageAnalysisOverlayView`, and ships explicit availability metadata for the iOS-only document-camera / Data Scanner / recognized-item areas.
+> **Status:** v0.2.1 covers the full public macOS `ImageAnalysisOverlayView` surface — including delegates, menu tags, selection metadata, tracking views, fonts, and subject analysis — alongside `ImageAnalyzer`, `ImageAnalysis`, and explicit availability metadata for the iOS-only document-camera / Data Scanner / recognized-item areas.
 
 ## Quick start
 
@@ -40,13 +40,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 - `ImageAnalyzerConfiguration`, `ImageAnalysisTypes`, and `ImageOrientation`
 - File-path based analysis through every public macOS analyzer overload: URL, `NSImage`, `CGImage`, `CIImage`, and `CVPixelBuffer`
 - `ImageAnalysis::transcript` and `has_results`
-- `LiveTextInteraction` control over macOS `ImageAnalysisOverlayView` state and inspection
+- full `LiveTextInteraction` coverage for macOS `ImageAnalysisOverlayView`, including delegates, menu tags, selection metadata, tracking/content views, fonts, and subject analysis
 - `VNDocumentCameraViewController`, `DataScannerViewController`, `RecognizedText`, `Barcode`, and `RecognizedItem` availability metadata on macOS
 
 ## Availability
 
 - `ImageAnalyzer`, `ImageAnalysis`, and `LiveTextInteraction` are available on macOS 13+.
-- `LiveTextInteraction::text` and `selected_text` require macOS 14+ because Apple introduced those overlay accessors after macOS 13.
+- `LiveTextInteraction::text`, `selected_text`, `selected_attributed_text`, `selected_ranges`, and `LiveTextMenuTag` require macOS 14+ because Apple introduced those overlay accessors after macOS 13.
 - `VNDocumentCameraViewController`, `DataScannerViewController`, `RecognizedText`, `Barcode`, and `RecognizedItem` are iOS-only Apple APIs. On macOS, this crate exposes them as structured availability metadata instead of pretending they exist.
 
 ## Examples

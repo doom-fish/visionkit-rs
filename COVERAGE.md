@@ -40,17 +40,17 @@ Audited against:
 | LiveTextInteraction (`ImageAnalysisOverlayView`) | `setSupplementaryInterfaceHidden(_:animated:)` | ✅ implemented | setter |
 | LiveTextInteraction (`ImageAnalysisOverlayView`) | `supplementaryInterfaceContentInsets` | ✅ implemented | getter + setter |
 
-## 🟡 Partial macOS surface
+## ✅ Newly completed macOS surface
 
 | Area | Apple API row | Status | Notes |
 | --- | --- | --- | --- |
-| LiveTextInteraction (`ImageAnalysisOverlayView`) | `delegate` / `init(_ delegate:)` | 🟡 partial | Delegate callbacks are not surfaced yet; the wrapper focuses on headless-safe overlay state and inspection. |
-| LiveTextInteraction (`ImageAnalysisOverlayView`) | `setContentsRectNeedsUpdate()` | 🟡 partial | Not yet surfaced in Rust. |
-| LiveTextInteraction (`ImageAnalysisOverlayView`) | `trackingImageView` | 🟡 partial | Managed internally through `track_image_at_path`, not exposed as a raw AppKit view. |
-| LiveTextInteraction (`ImageAnalysisOverlayView`) | `selectedAttributedText` / `selectedRanges` | 🟡 partial | String-only access is exposed; attributed/range metadata is not yet bridged. |
-| LiveTextInteraction (`ImageAnalysisOverlayView`) | `supplementaryInterfaceFont` | 🟡 partial | Font objects are not bridged. |
-| LiveTextInteraction (`ImageAnalysisOverlayView`) | `beginSubjectAnalysisIfNecessary()` | 🟡 partial | Subject analysis trigger not surfaced yet. |
-| LiveTextInteraction (`ImageAnalysisOverlayView`) | `SubjectUnavailable`, `Subject`, `subjects`, `highlightedSubjects`, `subject(at:)`, `image(for:)` | 🟡 partial | Subject/image extraction APIs are not yet surfaced. |
+| LiveTextInteraction (`ImageAnalysisOverlayView`) | `ImageAnalysisOverlayViewDelegate` + `init(_ delegate:)` + `delegate` | ✅ implemented | `LiveTextInteractionDelegate`, `LiveTextInteraction::with_delegate`, and `LiveTextInteraction::{delegate,set_delegate}` bridge the full public delegate family with recorded callbacks and headless-safe menu/view models. |
+| LiveTextInteraction (`ImageAnalysisOverlayView`) | `MenuTag` + menu tag constants | ✅ implemented | `LiveTextMenuTag::{copy_image, share_image, copy_subject, share_subject, lookup_item, recommended_app_items}` |
+| LiveTextInteraction (`ImageAnalysisOverlayView`) | `trackingImageView` | ✅ implemented | `LiveTextTrackingImageView` plus `LiveTextInteraction::{tracking_image_view,set_tracking_image_view}` |
+| LiveTextInteraction (`ImageAnalysisOverlayView`) | `selectedAttributedText` / `selectedRanges` | ✅ implemented | `LiveTextInteraction::{selected_attributed_text, selected_ranges, set_selected_ranges}` return serializable attributed text runs and UTF-16 ranges. |
+| LiveTextInteraction (`ImageAnalysisOverlayView`) | `setContentsRectNeedsUpdate()` | ✅ implemented | `LiveTextInteraction::set_contents_rect_needs_update` |
+| LiveTextInteraction (`ImageAnalysisOverlayView`) | `supplementaryInterfaceFont` | ✅ implemented | `LiveTextInteraction::{supplementary_interface_font, set_supplementary_interface_font}` use `LiveTextFont`. |
+| LiveTextInteraction (`ImageAnalysisOverlayView`) | `SubjectUnavailable`, `Subject`, `beginSubjectAnalysisIfNecessary()`, `subjects`, `highlightedSubjects`, `subject(at:)`, `image(for:)` | ✅ implemented | `LiveTextSubjectUnavailable`, `LiveTextSubject`, `LiveTextInteraction::{begin_subject_analysis_if_necessary, subjects, highlighted_subjects, set_highlighted_subjects, subject_at_point, image_for_subjects}` and PNG image extraction. |
 
 ## ⏭️ Skipped iOS-only surface
 
@@ -67,7 +67,7 @@ Audited against:
 
 - `visionkit::ImageAnalyzer` → `VisionKit.ImageAnalyzer`
 - `visionkit::ImageAnalysis` → `VisionKit.ImageAnalysis`
-- `visionkit::LiveTextInteraction` → macOS `VisionKit.ImageAnalysisOverlayView`
+- `visionkit::LiveTextInteraction` / `LiveTextInteractionDelegate` / `LiveTextSubject` → macOS `VisionKit.ImageAnalysisOverlayView`
 - `visionkit::VNDocumentCameraViewController` → availability metadata for the iOS-only document camera area
 - `visionkit::DataScannerViewController` → availability metadata for the iOS-only data scanner area
 - `visionkit::RecognizedText` / `Barcode` / `RecognizedItem` → availability metadata for the iOS-only recognized-item family

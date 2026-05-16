@@ -9,4 +9,4 @@ pub mod recognized_text;
 pub mod vn_document_camera_view_controller;
 
 pub use core::status;
-pub use core::vk_string_free;
+pub use core::{vk_bytes_free, vk_string_free};

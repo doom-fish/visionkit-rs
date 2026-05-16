@@ -23,12 +23,18 @@ pub mod vn_document_camera_view_controller;
 
 pub use barcode::Barcode;
 pub use data_scanner_view_controller::DataScannerViewController;
-pub use error::VisionKitError;
+pub use error::{LiveTextSubjectUnavailable, VisionKitError};
 pub use image_analysis::ImageAnalysis;
 pub use image_analyzer::{
     ImageAnalysisTypes, ImageAnalyzer, ImageAnalyzerConfiguration, ImageOrientation,
 };
-pub use live_text_interaction::{EdgeInsets, LiveTextInteraction, LiveTextInteractionTypes, Rect};
+pub use live_text_interaction::{
+    EdgeInsets, LiveTextAttributedText, LiveTextAttributedTextAttribute, LiveTextAttributedTextRun,
+    LiveTextContentView, LiveTextDelegateEvent, LiveTextEventInfo, LiveTextFont,
+    LiveTextImageData, LiveTextInteraction, LiveTextInteractionDelegate,
+    LiveTextInteractionTypes, LiveTextMenu, LiveTextMenuItem, LiveTextMenuTag,
+    LiveTextSubject, LiveTextTextRange, LiveTextTrackingImageView, Point, Rect, Size,
+};
 pub use recognized_item::RecognizedItem;
 pub use recognized_text::RecognizedText;
 pub use support::AreaSupportInfo;
@@ -37,13 +43,18 @@ pub use vn_document_camera_view_controller::VNDocumentCameraViewController;
 pub mod prelude {
     pub use crate::barcode::Barcode;
     pub use crate::data_scanner_view_controller::DataScannerViewController;
-    pub use crate::error::VisionKitError;
+    pub use crate::error::{LiveTextSubjectUnavailable, VisionKitError};
     pub use crate::image_analysis::ImageAnalysis;
     pub use crate::image_analyzer::{
         ImageAnalysisTypes, ImageAnalyzer, ImageAnalyzerConfiguration, ImageOrientation,
     };
     pub use crate::live_text_interaction::{
-        EdgeInsets, LiveTextInteraction, LiveTextInteractionTypes, Rect,
+        EdgeInsets, LiveTextAttributedText, LiveTextAttributedTextAttribute,
+        LiveTextAttributedTextRun, LiveTextContentView, LiveTextDelegateEvent,
+        LiveTextEventInfo, LiveTextFont, LiveTextImageData, LiveTextInteraction,
+        LiveTextInteractionDelegate, LiveTextInteractionTypes, LiveTextMenu,
+        LiveTextMenuItem, LiveTextMenuTag, LiveTextSubject, LiveTextTextRange,
+        LiveTextTrackingImageView, Point, Rect, Size,
     };
     pub use crate::recognized_item::RecognizedItem;
     pub use crate::recognized_text::RecognizedText;

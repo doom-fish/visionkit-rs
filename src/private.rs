@@ -1,11 +1,12 @@
 use core::ffi::{c_char, CStr};
 use std::ffi::CString;
 use std::path::Path;
+use std::slice;
 
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
-use crate::error::VisionKitError;
+use crate::error::{LiveTextSubjectUnavailable, VisionKitError};
 use crate::ffi;
 use crate::support::AreaSupportInfo;
 
@@ -59,6 +60,24 @@ pub unsafe fn parse_area_support_info_ptr(
     parse_json_ptr(ptr, context)
 }
 
+pub unsafe fn vec_from_buffer_ptr(
+    ptr: *mut u8,
+    len: usize,
+    context: &str,
+) -> Result<Vec<u8>, VisionKitError> {
+    if len == 0 {
+        return Ok(Vec::new());
+    }
+    if ptr.is_null() {
+        return Err(VisionKitError::Unknown(format!(
+            "missing {context} bytes from Swift bridge"
+        )));
+    }
+    let bytes = slice::from_raw_parts(ptr.cast_const(), len).to_vec();
+    ffi::vk_bytes_free(ptr);
+    Ok(bytes)
+}
+
 pub unsafe fn error_from_status(status: i32, err_msg: *mut c_char) -> VisionKitError {
     let message = take_optional_string(err_msg)
         .unwrap_or_else(|| format!("Swift bridge call failed with status code {status}"));
@@ -71,6 +90,10 @@ pub unsafe fn error_from_status(status: i32, err_msg: *mut c_char) -> VisionKitE
         ffi::status::TIMED_OUT => VisionKitError::TimedOut(message),
         ffi::status::ANALYZER_NOT_SUPPORTED => VisionKitError::AnalyzerNotSupported(message),
         ffi::status::FRAMEWORK_ERROR => VisionKitError::Framework(message),
+        ffi::status::SUBJECT_UNAVAILABLE => {
+            let _ = message;
+            VisionKitError::LiveTextSubjectUnavailable(LiveTextSubjectUnavailable::ImageUnavailable)
+        }
         _ => VisionKitError::Unknown(message),
     }
 }

@@ -13,6 +13,8 @@ fn prelude_exports_requested_area_types() {
     let _ = std::mem::size_of::<ImageAnalysis>();
     let _ = std::mem::size_of::<ImageAnalyzer>();
     let _ = std::mem::size_of::<LiveTextInteraction>();
+    let _ = std::mem::size_of::<LiveTextInteractionDelegate>();
+    let _ = std::mem::size_of::<LiveTextSubject>();
     let _ = std::mem::size_of::<RecognizedItem>();
     let _ = std::mem::size_of::<RecognizedText>();
     let _ = std::mem::size_of::<VNDocumentCameraViewController>();

@@ -1,10 +1,10 @@
 # visionkit-rs coverage audit (vs MacOSX26.2.sdk)
 
 SDK_PUBLIC_SYMBOLS: 89
-VERIFIED: 51
-GAPS: 38
+VERIFIED: 89
+GAPS: 0
 EXEMPT: 0
-COVERAGE_PCT: 57.30%
+COVERAGE_PCT: 100.00%
 
 Methodology:
 - Source of truth: `VisionKit.framework/.../VisionKit.swiftinterface`; the macOS public headers in the SDK are empty comment stubs.
@@ -68,47 +68,49 @@ Methodology:
 | ImageAnalysisOverlayView.setSupplementaryInterfaceHidden(_:animated:) | func | VisionKit.swiftinterface | LiveTextInteraction::set_supplementary_interface_hidden |
 | ImageAnalysisOverlayView.supplementaryInterfaceContentInsets | var | VisionKit.swiftinterface | LiveTextInteraction::{supplementary_interface_content_insets, set_supplementary_interface_content_insets} |
 
+| ImageAnalysisOverlayViewDelegate | protocol | VisionKit.swiftinterface | LiveTextInteractionDelegate |
+| ImageAnalysisOverlayViewDelegate.overlayView(_:shouldBeginAt:forAnalysisType:) | func | VisionKit.swiftinterface | LiveTextInteractionDelegate::{recorded_events, set_should_begin} |
+| ImageAnalysisOverlayViewDelegate.contentsRect(for:) | func | VisionKit.swiftinterface | LiveTextInteractionDelegate::{contents_rect_override, set_contents_rect_override, recorded_events} |
+| ImageAnalysisOverlayViewDelegate.contentView(for:) | func | VisionKit.swiftinterface | LiveTextInteractionDelegate::{content_view, set_content_view, recorded_events} |
+| ImageAnalysisOverlayViewDelegate.overlayView(_:shouldHandleKeyDownEvent:) | func | VisionKit.swiftinterface | LiveTextInteractionDelegate::{should_handle_key_down_event, set_should_handle_key_down_event, recorded_events} |
+| ImageAnalysisOverlayViewDelegate.overlayView(_:shouldShowMenuForEvent:atPoint:) | func | VisionKit.swiftinterface | LiveTextInteractionDelegate::{should_show_menu_for_event, set_should_show_menu_for_event, recorded_events} |
+| ImageAnalysisOverlayViewDelegate.overlayView(_:liveTextButtonDidChangeToVisible:) | func | VisionKit.swiftinterface | LiveTextInteractionDelegate::recorded_events |
+| ImageAnalysisOverlayViewDelegate.overlayView(_:highlightSelectedItemsDidChange:) | func | VisionKit.swiftinterface | LiveTextInteractionDelegate::recorded_events |
+| ImageAnalysisOverlayViewDelegate.textSelectionDidChange(_:) | func | VisionKit.swiftinterface | LiveTextInteractionDelegate::recorded_events |
+| ImageAnalysisOverlayViewDelegate.overlayView(_:updatedMenuFor:for:at:) | func | VisionKit.swiftinterface | LiveTextInteractionDelegate::{updated_menu, set_updated_menu, recorded_events} |
+| ImageAnalysisOverlayViewDelegate.overlayView(_:needsUpdate:) | func | VisionKit.swiftinterface | LiveTextInteractionDelegate::recorded_events |
+| ImageAnalysisOverlayViewDelegate.overlayView(_:willOpen:) | func | VisionKit.swiftinterface | LiveTextInteractionDelegate::recorded_events |
+| ImageAnalysisOverlayViewDelegate.overlayView(_:didClose:) | func | VisionKit.swiftinterface | LiveTextInteractionDelegate::recorded_events |
+| ImageAnalysisOverlayViewDelegate.overlayView(_:menu:willHighlight:) | func | VisionKit.swiftinterface | LiveTextInteractionDelegate::recorded_events |
+| ImageAnalysisOverlayView.MenuTag | struct | VisionKit.swiftinterface | LiveTextMenuTag |
+| ImageAnalysisOverlayView.MenuTag.copyImage | static var | VisionKit.swiftinterface | LiveTextMenuTag::copy_image |
+| ImageAnalysisOverlayView.MenuTag.shareImage | static var | VisionKit.swiftinterface | LiveTextMenuTag::share_image |
+| ImageAnalysisOverlayView.MenuTag.copySubject | static var | VisionKit.swiftinterface | LiveTextMenuTag::copy_subject |
+| ImageAnalysisOverlayView.MenuTag.shareSubject | static var | VisionKit.swiftinterface | LiveTextMenuTag::share_subject |
+| ImageAnalysisOverlayView.MenuTag.lookupItem | static var | VisionKit.swiftinterface | LiveTextMenuTag::lookup_item |
+| ImageAnalysisOverlayView.MenuTag.recommendedAppItems | static var | VisionKit.swiftinterface | LiveTextMenuTag::recommended_app_items |
+| ImageAnalysisOverlayView.init(_:) | func | VisionKit.swiftinterface | LiveTextInteraction::with_delegate |
+| ImageAnalysisOverlayView.delegate | var | VisionKit.swiftinterface | LiveTextInteraction::{delegate, set_delegate} |
+| ImageAnalysisOverlayView.trackingImageView | var | VisionKit.swiftinterface | LiveTextInteraction::{tracking_image_view, set_tracking_image_view} + LiveTextTrackingImageView |
+| ImageAnalysisOverlayView.selectedAttributedText | var | VisionKit.swiftinterface | LiveTextInteraction::selected_attributed_text |
+| ImageAnalysisOverlayView.selectedRanges | var | VisionKit.swiftinterface | LiveTextInteraction::{selected_ranges, set_selected_ranges} |
+| ImageAnalysisOverlayView.setContentsRectNeedsUpdate() | func | VisionKit.swiftinterface | LiveTextInteraction::set_contents_rect_needs_update |
+| ImageAnalysisOverlayView.supplementaryInterfaceFont | var | VisionKit.swiftinterface | LiveTextInteraction::{supplementary_interface_font, set_supplementary_interface_font} |
+| ImageAnalysisOverlayView.SubjectUnavailable | enum | VisionKit.swiftinterface | LiveTextSubjectUnavailable |
+| ImageAnalysisOverlayView.SubjectUnavailable.imageUnavailable | case | VisionKit.swiftinterface | LiveTextSubjectUnavailable::ImageUnavailable |
+| ImageAnalysisOverlayView.Subject | struct | VisionKit.swiftinterface | LiveTextSubject |
+| ImageAnalysisOverlayView.Subject.bounds | var | VisionKit.swiftinterface | LiveTextSubject::bounds |
+| ImageAnalysisOverlayView.Subject.image | var | VisionKit.swiftinterface | LiveTextSubject::image |
+| ImageAnalysisOverlayView.beginSubjectAnalysisIfNecessary() | func | VisionKit.swiftinterface | LiveTextInteraction::begin_subject_analysis_if_necessary |
+| ImageAnalysisOverlayView.subjects | var | VisionKit.swiftinterface | LiveTextInteraction::subjects |
+| ImageAnalysisOverlayView.highlightedSubjects | var | VisionKit.swiftinterface | LiveTextInteraction::{highlighted_subjects, set_highlighted_subjects} |
+| ImageAnalysisOverlayView.subject(at:) | func | VisionKit.swiftinterface | LiveTextInteraction::subject_at_point |
+| ImageAnalysisOverlayView.image(for:) | func | VisionKit.swiftinterface | LiveTextInteraction::image_for_subjects |
+
 ## 🔴 GAPS
 | Symbol | Kind | Header | Notes |
 | --- | --- | --- | --- |
-| ImageAnalysisOverlayViewDelegate | protocol | VisionKit.swiftinterface | No public delegate protocol bridge. |
-| ImageAnalysisOverlayViewDelegate.overlayView(_:shouldBeginAt:forAnalysisType:) | func | VisionKit.swiftinterface | No delegate callback surface. |
-| ImageAnalysisOverlayViewDelegate.contentsRect(for:) | func | VisionKit.swiftinterface | No delegate callback surface. |
-| ImageAnalysisOverlayViewDelegate.contentView(for:) | func | VisionKit.swiftinterface | No AppKit content view delegate bridge. |
-| ImageAnalysisOverlayViewDelegate.overlayView(_:shouldHandleKeyDownEvent:) | func | VisionKit.swiftinterface | No delegate callback surface. |
-| ImageAnalysisOverlayViewDelegate.overlayView(_:shouldShowMenuForEvent:atPoint:) | func | VisionKit.swiftinterface | No delegate callback or menu customization bridge. |
-| ImageAnalysisOverlayViewDelegate.overlayView(_:liveTextButtonDidChangeToVisible:) | func | VisionKit.swiftinterface | No delegate callback surface. |
-| ImageAnalysisOverlayViewDelegate.overlayView(_:highlightSelectedItemsDidChange:) | func | VisionKit.swiftinterface | No delegate callback surface. |
-| ImageAnalysisOverlayViewDelegate.textSelectionDidChange(_:) | func | VisionKit.swiftinterface | No delegate callback surface. |
-| ImageAnalysisOverlayViewDelegate.overlayView(_:updatedMenuFor:for:at:) | func | VisionKit.swiftinterface | No NSMenu customization bridge. |
-| ImageAnalysisOverlayViewDelegate.overlayView(_:needsUpdate:) | func | VisionKit.swiftinterface | No delegate callback surface. |
-| ImageAnalysisOverlayViewDelegate.overlayView(_:willOpen:) | func | VisionKit.swiftinterface | No delegate callback surface. |
-| ImageAnalysisOverlayViewDelegate.overlayView(_:didClose:) | func | VisionKit.swiftinterface | No delegate callback surface. |
-| ImageAnalysisOverlayViewDelegate.overlayView(_:menu:willHighlight:) | func | VisionKit.swiftinterface | No NSMenuItem delegate bridge. |
-| ImageAnalysisOverlayView.MenuTag | struct | VisionKit.swiftinterface | Menu-tag helper type is not exported. |
-| ImageAnalysisOverlayView.MenuTag.copyImage | static var | VisionKit.swiftinterface | Menu tag constants are not exported. |
-| ImageAnalysisOverlayView.MenuTag.shareImage | static var | VisionKit.swiftinterface | Menu tag constants are not exported. |
-| ImageAnalysisOverlayView.MenuTag.copySubject | static var | VisionKit.swiftinterface | Menu tag constants are not exported. |
-| ImageAnalysisOverlayView.MenuTag.shareSubject | static var | VisionKit.swiftinterface | Menu tag constants are not exported. |
-| ImageAnalysisOverlayView.MenuTag.lookupItem | static var | VisionKit.swiftinterface | Menu tag constants are not exported. |
-| ImageAnalysisOverlayView.MenuTag.recommendedAppItems | static var | VisionKit.swiftinterface | Menu tag constants are not exported. |
-| ImageAnalysisOverlayView.init(_:) | func | VisionKit.swiftinterface | No delegate-based convenience initializer. |
-| ImageAnalysisOverlayView.delegate | var | VisionKit.swiftinterface | No delegate getter/setter bridge. |
-| ImageAnalysisOverlayView.trackingImageView | var | VisionKit.swiftinterface | Only managed internally via track_image_at_path; raw NSImageView is not exposed. |
-| ImageAnalysisOverlayView.selectedAttributedText | var | VisionKit.swiftinterface | Only plain selected_text is exposed. |
-| ImageAnalysisOverlayView.selectedRanges | var | VisionKit.swiftinterface | Selection range metadata is not exposed. |
-| ImageAnalysisOverlayView.setContentsRectNeedsUpdate() | func | VisionKit.swiftinterface | Not bridged. |
-| ImageAnalysisOverlayView.supplementaryInterfaceFont | var | VisionKit.swiftinterface | NSFont bridge is missing. |
-| ImageAnalysisOverlayView.SubjectUnavailable | enum | VisionKit.swiftinterface | Subject-analysis error surface is not exported. |
-| ImageAnalysisOverlayView.SubjectUnavailable.imageUnavailable | case | VisionKit.swiftinterface | Subject-analysis error surface is not exported. |
-| ImageAnalysisOverlayView.Subject | struct | VisionKit.swiftinterface | Subject handles are not exported. |
-| ImageAnalysisOverlayView.Subject.bounds | var | VisionKit.swiftinterface | Subject handles are not exported. |
-| ImageAnalysisOverlayView.Subject.image | var | VisionKit.swiftinterface | Subject handles are not exported. |
-| ImageAnalysisOverlayView.beginSubjectAnalysisIfNecessary() | func | VisionKit.swiftinterface | Subject analysis control is not bridged. |
-| ImageAnalysisOverlayView.subjects | var | VisionKit.swiftinterface | Subject collection is not exposed. |
-| ImageAnalysisOverlayView.highlightedSubjects | var | VisionKit.swiftinterface | Subject highlighting is not exposed. |
-| ImageAnalysisOverlayView.subject(at:) | func | VisionKit.swiftinterface | Point lookup for subjects is not exposed. |
-| ImageAnalysisOverlayView.image(for:) | func | VisionKit.swiftinterface | Subject image extraction is not exposed. |
+| _None_ | — | — | All public macOS `ImageAnalysisOverlayView` symbols from the audited swiftinterface are now bridged. |
 
 ## ⏭️ EXEMPT
 | Symbol | Kind | Header | Reason | SDK attribute |

@@ -4,6 +4,7 @@ use core::ffi::c_char;
 
 extern "C" {
     pub fn vk_string_free(s: *mut c_char);
+    pub fn vk_bytes_free(bytes: *mut u8);
 }
 
 pub mod status {
@@ -14,5 +15,6 @@ pub mod status {
     pub const UNAVAILABLE_ON_THIS_PLATFORM: i32 = -4;
     pub const ANALYZER_NOT_SUPPORTED: i32 = -10;
     pub const FRAMEWORK_ERROR: i32 = -20;
+    pub const SUBJECT_UNAVAILABLE: i32 = -30;
     pub const UNKNOWN: i32 = -99;
 }

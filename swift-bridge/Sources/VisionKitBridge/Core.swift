@@ -9,12 +9,19 @@ let VK_TIMED_OUT: Int32 = -3
 let VK_UNAVAILABLE_ON_THIS_PLATFORM: Int32 = -4
 let VK_ANALYZER_NOT_SUPPORTED: Int32 = -10
 let VK_FRAMEWORK_ERROR: Int32 = -20
+let VK_SUBJECT_UNAVAILABLE: Int32 = -30
 let VK_UNKNOWN: Int32 = -99
 
 @_cdecl("vk_string_free")
 public func vk_string_free(_ string: UnsafeMutablePointer<CChar>?) {
     guard let string else { return }
     free(string)
+}
+
+@_cdecl("vk_bytes_free")
+public func vk_bytes_free(_ bytes: UnsafeMutableRawPointer?) {
+    guard let bytes else { return }
+    free(bytes)
 }
 
 @inline(__always)
@@ -260,6 +267,26 @@ func vkWriteJSON<T: Encodable>(
     to outPointer: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>
 ) throws {
     outPointer.pointee = vkCString(try vkEncodeJSON(value))
+}
+
+func vkWriteBytes(
+    _ data: Data,
+    to outBytes: UnsafeMutablePointer<UnsafeMutableRawPointer?>,
+    length outLength: UnsafeMutablePointer<UInt64>
+) throws {
+    if data.isEmpty {
+        outBytes.pointee = nil
+        outLength.pointee = 0
+        return
+    }
+    guard let raw = malloc(data.count) else {
+        throw VKBridgeError.framework(
+            "failed to allocate \(data.count) bytes for Swift bridge output"
+        )
+    }
+    data.copyBytes(to: raw.assumingMemoryBound(to: UInt8.self), count: data.count)
+    outBytes.pointee = raw
+    outLength.pointee = UInt64(data.count)
 }
 
 func vkRequireString(_ cString: UnsafePointer<CChar>?, field: String) throws -> String {

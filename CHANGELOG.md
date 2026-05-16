@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+- completed the remaining macOS `ImageAnalysisOverlayView` audit gaps with delegate, menu-tag, selection-range, font, tracking-image-view, and subject-analysis wrappers
+- added headless-safe Rust models for overlay delegates, menus, attributed selections, tracking/content views, subjects, and extracted PNG image data
+- extended the live-text example/tests and closed the audit at 100% macOS surface coverage
+
 ## 0.2.0
 
 - added per-area Rust modules and Swift bridge files for document camera, data scanner, image analyzer, live text interaction, image analysis, recognized text, barcode, and recognized item coverage

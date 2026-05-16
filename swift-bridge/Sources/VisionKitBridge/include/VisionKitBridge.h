@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 void vk_string_free(char *string);
+void vk_bytes_free(void *bytes);
 
 void *vk_image_analyzer_new(void);
 void vk_image_analyzer_release(void *token);
@@ -66,7 +67,108 @@ int32_t vk_image_analysis_has_results(
     char **out_error_message
 );
 
+void *vk_live_text_content_view_new(void);
+void vk_live_text_content_view_release(void *token);
+int32_t vk_live_text_content_view_frame(
+    void *token,
+    double *out_x,
+    double *out_y,
+    double *out_width,
+    double *out_height,
+    char **out_error_message
+);
+int32_t vk_live_text_content_view_set_frame(
+    void *token,
+    double x,
+    double y,
+    double width,
+    double height,
+    char **out_error_message
+);
+
+void *vk_live_text_tracking_image_view_new(void);
+void vk_live_text_tracking_image_view_release(void *token);
+int32_t vk_live_text_tracking_image_view_frame(
+    void *token,
+    double *out_x,
+    double *out_y,
+    double *out_width,
+    double *out_height,
+    char **out_error_message
+);
+int32_t vk_live_text_tracking_image_view_set_frame(
+    void *token,
+    double x,
+    double y,
+    double width,
+    double height,
+    char **out_error_message
+);
+int32_t vk_live_text_tracking_image_view_set_image_at_path(
+    void *token,
+    const char *path,
+    char **out_error_message
+);
+int32_t vk_live_text_tracking_image_view_image_size(
+    void *token,
+    int32_t *out_has_image,
+    double *out_width,
+    double *out_height,
+    char **out_error_message
+);
+
+void *vk_live_text_interaction_delegate_new(void);
+void vk_live_text_interaction_delegate_release(void *token);
+int32_t vk_live_text_interaction_delegate_config_json(
+    void *token,
+    char **out_config_json,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_delegate_set_config_json(
+    void *token,
+    const char *config_json,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_delegate_content_view(
+    void *token,
+    void **out_content_view_token,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_delegate_set_content_view(
+    void *token,
+    void *content_view_token,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_delegate_recorded_events_json(
+    void *token,
+    char **out_events_json,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_delegate_clear_recorded_events(
+    void *token,
+    char **out_error_message
+);
+
+void vk_live_text_subject_release(void *token);
+int32_t vk_live_text_subject_bounds(
+    void *token,
+    double *out_x,
+    double *out_y,
+    double *out_width,
+    double *out_height,
+    char **out_error_message
+);
+int32_t vk_live_text_subject_png_data(
+    void *token,
+    void **out_bytes,
+    uint64_t *out_len,
+    double *out_width,
+    double *out_height,
+    char **out_error_message
+);
+
 void *vk_live_text_interaction_new(void);
+void *vk_live_text_interaction_new_with_delegate(void *delegate_token);
 void vk_live_text_interaction_release(void *token);
 int32_t vk_live_text_interaction_set_analysis(
     void *token,
@@ -76,6 +178,16 @@ int32_t vk_live_text_interaction_set_analysis(
 int32_t vk_live_text_interaction_track_image_at_path(
     void *token,
     const char *path,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_delegate(
+    void *token,
+    void **out_delegate_token,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_set_delegate(
+    void *token,
+    void *delegate_token,
     char **out_error_message
 );
 int32_t vk_live_text_interaction_preferred_interaction_types(
@@ -103,6 +215,16 @@ int32_t vk_live_text_interaction_set_selectable_items_highlighted(
     int32_t value,
     char **out_error_message
 );
+int32_t vk_live_text_interaction_tracking_image_view(
+    void *token,
+    void **out_tracking_image_view_token,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_set_tracking_image_view(
+    void *token,
+    void *tracking_image_view_token,
+    char **out_error_message
+);
 int32_t vk_live_text_interaction_has_active_text_selection(
     void *token,
     int32_t *out_value,
@@ -122,12 +244,31 @@ int32_t vk_live_text_interaction_selected_text(
     char **out_text,
     char **out_error_message
 );
+int32_t vk_live_text_interaction_selected_attributed_text_json(
+    void *token,
+    char **out_text_json,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_selected_ranges_json(
+    void *token,
+    char **out_ranges_json,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_set_selected_ranges_json(
+    void *token,
+    const char *ranges_json,
+    char **out_error_message
+);
 int32_t vk_live_text_interaction_contents_rect(
     void *token,
     double *out_x,
     double *out_y,
     double *out_width,
     double *out_height,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_set_contents_rect_needs_update(
+    void *token,
     char **out_error_message
 );
 int32_t vk_live_text_interaction_has_interactive_item_at_point(
@@ -195,6 +336,55 @@ int32_t vk_live_text_interaction_set_supplementary_interface_content_insets(
     double left,
     double bottom,
     double right,
+    char **out_error_message
+);
+int32_t vk_live_text_menu_tags_json(
+    char **out_menu_tags_json,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_supplementary_interface_font_json(
+    void *token,
+    char **out_font_json,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_set_supplementary_interface_font_json(
+    void *token,
+    const char *font_json,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_begin_subject_analysis_if_necessary(
+    void *token,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_subjects_json(
+    void *token,
+    char **out_subjects_json,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_highlighted_subjects_json(
+    void *token,
+    char **out_subjects_json,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_set_highlighted_subjects_json(
+    void *token,
+    const char *subjects_json,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_subject_at_json(
+    void *token,
+    double x,
+    double y,
+    char **out_subject_json,
+    char **out_error_message
+);
+int32_t vk_live_text_interaction_image_for_subjects_png_data(
+    void *token,
+    const char *subjects_json,
+    void **out_bytes,
+    uint64_t *out_len,
+    double *out_width,
+    double *out_height,
     char **out_error_message
 );
 
