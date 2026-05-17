@@ -21,6 +21,9 @@ pub mod recognized_text;
 pub mod support;
 pub mod vn_document_camera_view_controller;
 
+#[cfg(feature = "async")]
+pub mod async_api;
+
 pub use barcode::Barcode;
 pub use data_scanner_view_controller::DataScannerViewController;
 pub use error::{LiveTextSubjectUnavailable, VisionKitError};

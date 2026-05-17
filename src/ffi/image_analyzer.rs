@@ -51,3 +51,25 @@ extern "C" {
         out_error_message: *mut *mut c_char,
     ) -> i32;
 }
+
+/// Async C callback type: `(result: *const c_void, error: *const i8, ctx: *mut c_void) -> ()`
+pub type VkAsyncCb =
+    unsafe extern "C" fn(result: *const c_void, error: *const i8, ctx: *mut c_void);
+
+#[cfg(feature = "async")]
+extern "C" {
+    /// True-async thunk for `ImageAnalyzer.analyze(imageAt:orientation:configuration:)`.
+    /// Fires `cb(retained VKImageAnalysisBox ptr, nil, ctx)` on success.
+    pub fn vk_image_analyzer_analyze_image_async(
+        token: *mut c_void,
+        path: *const c_char,
+        orientation_raw: u32,
+        configuration_json: *const c_char,
+        cb: VkAsyncCb,
+        ctx: *mut c_void,
+    );
+
+    /// Pump the Obj-C main run loop for up to `milliseconds` ms.
+    /// Must be called from the main thread; no-ops on non-main threads.
+    pub fn vk_pump_main_run_loop(milliseconds: u32);
+}

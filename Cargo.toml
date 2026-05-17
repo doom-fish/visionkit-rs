@@ -1,6 +1,6 @@
 [package]
 name = "visionkit-rs"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/doom-fish/visionkit-rs"
@@ -37,9 +37,17 @@ cargo = { level = "warn", priority = -1 }
 name = "visionkit"
 crate-type = ["lib"]
 
+[features]
+default = []
+async = ["dep:doom-fish-utils"]
+
 [dependencies]
+doom-fish-utils = { path = "../doom-fish-utils", version = "0.1", optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+[dev-dependencies]
+pollster = "0.3"
 
 [package.metadata.docs.rs]
 all-features = true

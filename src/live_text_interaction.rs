@@ -731,6 +731,10 @@ impl LiveTextInteraction {
         Ok(Self { token })
     }
 
+    pub(crate) fn raw_token(&self) -> *mut c_void {
+        self.token
+    }
+
     pub fn with_delegate(delegate: &LiveTextInteractionDelegate) -> Result<Self, VisionKitError> {
         let token = unsafe {
             ffi::live_text_interaction::vk_live_text_interaction_new_with_delegate(delegate.raw_token())

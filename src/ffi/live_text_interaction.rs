@@ -324,3 +324,30 @@ extern "C" {
         out_error_message: *mut *mut c_char,
     ) -> i32;
 }
+
+#[cfg(feature = "async")]
+extern "C" {
+    /// True-async thunk for `ImageAnalysisOverlayView.subjects` (macOS).
+    ///
+    /// Fires `cb(json_ptr, nil, ctx)` on success, where the result pointer is a
+    /// JSON-encoded array of `{"x":…,"y":…,"width":…,"height":…}` objects cast
+    /// to `*const c_void`.
+    pub fn vk_live_text_overlay_subjects_async(
+        token: *mut c_void,
+        cb: crate::ffi::image_analyzer::VkAsyncCb,
+        ctx: *mut c_void,
+    );
+
+    /// True-async thunk for `ImageAnalysisOverlayView.subject(at:)` (macOS).
+    ///
+    /// Fires `cb(json_ptr, nil, ctx)` on success, where the result pointer is
+    /// either `"null"` (no subject) or a JSON-encoded bounds object; both cast
+    /// to `*const c_void`.
+    pub fn vk_live_text_overlay_subject_at_async(
+        token: *mut c_void,
+        point_x: f64,
+        point_y: f64,
+        cb: crate::ffi::image_analyzer::VkAsyncCb,
+        ctx: *mut c_void,
+    );
+}

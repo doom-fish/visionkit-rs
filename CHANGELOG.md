@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.2.1
+## 0.3.0
+
+- added `async_api` module (Tier 1) gated behind the `async` Cargo feature
+- `AsyncImageAnalyzer::analyze_image_at_path` wraps `ImageAnalyzer.analyze(imageAt:orientation:configuration:) async throws` as a Rust `Future`
+- `AsyncOverlaySubjects` wraps `ImageAnalysisOverlayView.subjects` and `.subject(at:)` as `SubjectsFuture` / `SubjectAtFuture`
+- `AnalysisSubjectBounds` — JSON-serialisable bounds struct for `Subject` on macOS
+- `async_api::block_on` — run-loop-aware executor that pumps the Obj-C main run loop between polls, required when calling VisionKit futures from the main thread
+- Swift `@_cdecl` thunks use `Task { @MainActor in }` for the actual Apple API calls and fire C callbacks upon completion
+- `vk_pump_main_run_loop(millis)` C hook for cross-language run-loop co-operation
+- added `doom-fish-utils` optional dependency and `pollster` dev-dependency
+
 
 - completed the remaining macOS `ImageAnalysisOverlayView` audit gaps with delegate, menu-tag, selection-range, font, tracking-image-view, and subject-analysis wrappers
 - added headless-safe Rust models for overlay delegates, menus, attributed selections, tracking/content views, subjects, and extracted PNG image data

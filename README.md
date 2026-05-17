@@ -2,7 +2,7 @@
 
 Safe Rust bindings for Apple's `VisionKit.framework` on macOS.
 
-> **Status:** v0.2.1 covers the full public macOS `ImageAnalysisOverlayView` surface — including delegates, menu tags, selection metadata, tracking views, fonts, and subject analysis — alongside `ImageAnalyzer`, `ImageAnalysis`, and explicit availability metadata for the iOS-only document-camera / Data Scanner / recognized-item areas.
+> **Status:** v0.3.0 adds a Tier-1 async API module on top of full v0.2.x coverage of `ImageAnalysisOverlayView`, `ImageAnalyzer`, `ImageAnalysis`, and availability metadata for the iOS-only areas.
 
 ## Quick start
 
@@ -34,6 +34,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+## Async API (`async` feature)
+
+Enable with `visionkit = { version = "0.3", features = ["async"] }`.
+
+```rust,no_run
+use visionkit::async_api::{block_on, AsyncImageAnalyzer};
+use visionkit::{ImageAnalysisTypes, ImageAnalyzerConfiguration, ImageOrientation};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    if !AsyncImageAnalyzer::is_supported() {
+        return Ok(());
+    }
+    let result = block_on(async {
+        let cfg = ImageAnalyzerConfiguration::new(ImageAnalysisTypes::TEXT);
+        AsyncImageAnalyzer::new()?
+            .analyze_image_at_path("examples/assets/live_text.png", ImageOrientation::Up, &cfg)?
+            .await
+    });
+    println!("transcript: {}", result?.transcript()?);
+    Ok(())
+}
+```
+
+**Note:** `block_on` must be called from the **main thread**. It pumps the Obj-C `RunLoop.main` between polls so that `@MainActor` Swift tasks can make progress. Use any executor-agnostic async runtime (Tokio, async-std, etc.) with the provided futures — just ensure `RunLoop.main` is pumped externally if not using `block_on`.
+
 ## Highlights
 
 - `ImageAnalyzer::is_supported` and `supported_text_recognition_languages`
@@ -61,6 +86,7 @@ cargo run --example 06_image_analysis
 cargo run --example 07_recognized_text
 cargo run --example 08_barcode
 cargo run --example 09_recognized_item
+cargo run --features async --example 10_async_analyze
 ```
 
 See [`COVERAGE.md`](COVERAGE.md) for the audited VisionKit API matrix.

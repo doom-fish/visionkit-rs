@@ -409,4 +409,40 @@ int32_t vk_recognized_item_support_json(
     char **out_error_message
 );
 
+/* =========================================================================
+ * Async thunks (feature = "async")
+ *
+ * Callback signature used by every async thunk:
+ *   arg0  – opaque result pointer on success; for JSON-returning thunks this
+ *            is a const char* cast to const void*.
+ *   arg1  – error C-string on failure, NULL on success.
+ *   arg2  – Rust context pointer, passed through unchanged.
+ * ========================================================================= */
+typedef void (*vk_async_cb)(const void *result, const char *error, void *ctx);
+
+void vk_image_analyzer_analyze_image_async(
+    void *token,
+    const char *path,
+    uint32_t orientation_raw,
+    const char *configuration_json,
+    vk_async_cb cb,
+    void *ctx
+);
+
+void vk_live_text_overlay_subjects_async(
+    void *token,
+    vk_async_cb cb,
+    void *ctx
+);
+
+void vk_live_text_overlay_subject_at_async(
+    void *token,
+    double point_x,
+    double point_y,
+    vk_async_cb cb,
+    void *ctx
+);
+
+void vk_pump_main_run_loop(uint32_t milliseconds);
+
 #endif
