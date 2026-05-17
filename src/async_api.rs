@@ -151,7 +151,11 @@ pub struct AsyncImageAnalyzer {
 }
 
 // SAFETY: the underlying VKImageAnalyzerBox is reference-counted by Swift ARC
-// and the callback fires exactly once, so moving across threads is safe.
+// and the callback fires exactly once. The callback carries a reference to the
+// token across threads, and since the token is ARC-counted by Swift, it remains
+// valid regardless of which thread completes the async operation. Sync is safe
+// because VKImageAnalyzerBox is thread-safe (it's an immutable system framework
+// class with no thread-local state).
 unsafe impl Send for AsyncImageAnalyzer {}
 unsafe impl Sync for AsyncImageAnalyzer {}
 
@@ -311,7 +315,7 @@ impl Future for SubjectAtFuture {
 ///
 /// On macOS the subject APIs live on `ImageAnalysisOverlayView`
 /// (Rust: [`LiveTextInteraction`]), not directly on `ImageAnalysis`.
-/// Both require macOS 13+ and the [`ImageAnalysisTypes::VISUAL_LOOK_UP`]
+/// Both require macOS 13+ and the [`crate::ImageAnalysisTypes::VISUAL_LOOK_UP`]
 /// analysis type in the configuration used when the analysis was performed.
 ///
 /// # Note on subject bounds coordinate space
@@ -325,9 +329,13 @@ pub struct AsyncOverlaySubjects {
     token: *mut c_void,
 }
 
-// SAFETY: VKLiveTextInteractionBox is ARC-counted; callback fires once.
+// SAFETY: the underlying VKLiveTextInteractionBox is ARC-counted and the callback
+// fires exactly once. The callback carries a reference to the token across threads,
+// and since the token is ARC-counted by Swift, it remains valid regardless of which
+// thread completes the async operation. Sync is NOT implemented because the
+// underlying ImageAnalysisOverlayView is a UI component that must be accessed from
+// the main thread.
 unsafe impl Send for AsyncOverlaySubjects {}
-unsafe impl Sync for AsyncOverlaySubjects {}
 
 impl AsyncOverlaySubjects {
     /// Wrap a [`LiveTextInteraction`] for async subject queries.
@@ -348,7 +356,7 @@ impl AsyncOverlaySubjects {
     /// synchronously within that actor context.
     ///
     /// Returns an empty `Vec` when no subjects are found or when the analysis
-    /// did not include [`ImageAnalysisTypes::VISUAL_LOOK_UP`].
+    /// did not include [`crate::ImageAnalysisTypes::VISUAL_LOOK_UP`].
     #[must_use = "returns a future that must be awaited"]
     pub fn subjects(&self) -> SubjectsFuture {
         let (future, ctx) = AsyncCompletion::create();

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1
+
+- fixed broken intra-doc links to `ImageAnalysisTypes::VISUAL_LOOK_UP` in `async_api` module
+- improved `unsafe impl Send` and `unsafe impl Sync` safety documentation for `AsyncImageAnalyzer` and `AsyncOverlaySubjects`
+
 ## 0.3.0
 
 - added `async_api` module (Tier 1) gated behind the `async` Cargo feature
