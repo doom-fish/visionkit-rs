@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.2] - 2026-05-18
+
+- Widen doom-fish-utils version bound to `<0.3` so 0.2.x resolves.
+
 ## 0.3.1
 
 - fixed broken intra-doc links to `ImageAnalysisTypes::VISUAL_LOOK_UP` in `async_api` module
