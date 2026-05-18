@@ -6,9 +6,11 @@ use crate::ffi;
 use crate::private::{error_from_status, parse_area_support_info_ptr};
 use crate::support::AreaSupportInfo;
 
+/// Wraps the VisionKit DataScannerViewController counterpart.
 pub struct DataScannerViewController;
 
 impl DataScannerViewController {
+    /// Returns VisionKit availability metadata for this area.
     pub fn support_info() -> Result<AreaSupportInfo, VisionKitError> {
         let mut support_json: *mut c_char = ptr::null_mut();
         let mut err_msg: *mut c_char = ptr::null_mut();
@@ -27,10 +29,12 @@ impl DataScannerViewController {
         }
     }
 
+    /// Returns whether this VisionKit area is available on the current platform.
     pub fn is_available_on_current_platform() -> Result<bool, VisionKitError> {
         Ok(Self::support_info()?.available_on_current_platform)
     }
 
+    /// Creates the VisionKit `DataScannerViewController` wrapper.
     pub fn new() -> Result<Self, VisionKitError> {
         let info = Self::support_info()?;
         if info.available_on_current_platform {

@@ -2,7 +2,9 @@ use std::error::Error;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+/// Represents why a VisionKit live text subject is unavailable.
 pub enum LiveTextSubjectUnavailable {
+    /// Represents a VisionKit subject image that could not be produced.
     ImageUnavailable,
 }
 
@@ -15,14 +17,23 @@ impl fmt::Display for LiveTextSubjectUnavailable {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// Represents an error returned by the VisionKit wrappers.
 pub enum VisionKitError {
+    /// Represents an invalid-argument error from VisionKit.
     InvalidArgument(String),
+    /// Represents a macOS availability error from VisionKit.
     UnavailableOnThisMacOS(String),
+    /// Represents a platform availability error from VisionKit.
     UnavailableOnThisPlatform(String),
+    /// Represents a timeout reported by VisionKit.
     TimedOut(String),
+    /// Represents an unsupported-analyzer error from VisionKit.
     AnalyzerNotSupported(String),
+    /// Represents a framework-level error from VisionKit.
     Framework(String),
+    /// Represents a live text subject error from VisionKit.
     LiveTextSubjectUnavailable(LiveTextSubjectUnavailable),
+    /// Represents an unknown error returned by VisionKit.
     Unknown(String),
 }
 

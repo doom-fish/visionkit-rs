@@ -21,27 +21,36 @@ type AnalyzePathFn = unsafe extern "C" fn(
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
+/// Wraps VisionKit image analysis type flags.
 pub struct ImageAnalysisTypes(u64);
 
 impl ImageAnalysisTypes {
+    /// Matches the empty VisionKit `ImageAnalysisTypes` flag set.
     pub const NONE: Self = Self(0);
+    /// Matches the VisionKit `TEXT` flag.
     pub const TEXT: Self = Self(1);
+    /// Matches the VisionKit `MACHINE_READABLE_CODE` flag.
     pub const MACHINE_READABLE_CODE: Self = Self(2);
+    /// Matches the VisionKit `VISUAL_LOOK_UP` flag.
     pub const VISUAL_LOOK_UP: Self = Self(4);
+    /// Matches the VisionKit `ImageAnalysisTypes` flag set containing every supported option.
     pub const ALL: Self =
         Self(Self::TEXT.0 | Self::MACHINE_READABLE_CODE.0 | Self::VISUAL_LOOK_UP.0);
 
     #[must_use]
+    /// Creates the VisionKit `ImageAnalysisTypes` wrapper.
     pub const fn new(raw: u64) -> Self {
         Self(raw)
     }
 
     #[must_use]
+    /// Returns the raw VisionKit `ImageAnalysisTypes` value.
     pub const fn bits(self) -> u64 {
         self.0
     }
 
     #[must_use]
+    /// Returns whether this VisionKit `ImageAnalysisTypes` value contains `other`.
     pub const fn contains(self, other: Self) -> bool {
         (self.0 & other.0) == other.0
     }
@@ -68,20 +77,30 @@ impl Default for ImageAnalysisTypes {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+/// Represents a VisionKit image orientation.
 pub enum ImageOrientation {
     #[default]
+    /// Matches the VisionKit `Up` orientation case.
     Up,
+    /// Matches the VisionKit `UpMirrored` orientation case.
     UpMirrored,
+    /// Matches the VisionKit `Down` orientation case.
     Down,
+    /// Matches the VisionKit `DownMirrored` orientation case.
     DownMirrored,
+    /// Matches the VisionKit `LeftMirrored` orientation case.
     LeftMirrored,
+    /// Matches the VisionKit `Right` orientation case.
     Right,
+    /// Matches the VisionKit `RightMirrored` orientation case.
     RightMirrored,
+    /// Matches the VisionKit `Left` orientation case.
     Left,
 }
 
 impl ImageOrientation {
     #[must_use]
+    /// Returns the raw VisionKit `ImageOrientation` value.
     pub const fn raw_value(self) -> u32 {
         match self {
             Self::Up => 1,
@@ -98,6 +117,7 @@ impl ImageOrientation {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+/// Represents a VisionKit image analyzer configuration.
 pub struct ImageAnalyzerConfiguration {
     analysis_types: ImageAnalysisTypes,
     locales: Vec<String>,
@@ -105,6 +125,7 @@ pub struct ImageAnalyzerConfiguration {
 
 impl ImageAnalyzerConfiguration {
     #[must_use]
+    /// Creates the VisionKit `ImageAnalyzerConfiguration` wrapper.
     pub fn new(analysis_types: ImageAnalysisTypes) -> Self {
         Self {
             analysis_types,
@@ -113,16 +134,19 @@ impl ImageAnalyzerConfiguration {
     }
 
     #[must_use]
+    /// Returns the configured VisionKit analysis types.
     pub fn analysis_types(&self) -> ImageAnalysisTypes {
         self.analysis_types
     }
 
     #[must_use]
+    /// Returns the configured VisionKit locales.
     pub fn locales(&self) -> &[String] {
         &self.locales
     }
 
     #[must_use]
+    /// Returns this VisionKit analyzer configuration with the provided locales.
     pub fn with_locales<I, S>(mut self, locales: I) -> Self
     where
         I: IntoIterator<Item = S>,
@@ -133,6 +157,7 @@ impl ImageAnalyzerConfiguration {
     }
 }
 
+/// Wraps the VisionKit ImageAnalyzer counterpart.
 pub struct ImageAnalyzer {
     token: *mut c_void,
 }
@@ -147,6 +172,7 @@ impl Drop for ImageAnalyzer {
 }
 
 impl ImageAnalyzer {
+    /// Creates the VisionKit `ImageAnalyzer` wrapper.
     pub fn new() -> Result<Self, VisionKitError> {
         let token = unsafe { ffi::image_analyzer::vk_image_analyzer_new() };
         if token.is_null() {
@@ -158,10 +184,12 @@ impl ImageAnalyzer {
     }
 
     #[must_use]
+    /// Returns whether the VisionKit `ImageAnalyzer` counterpart is supported on this system.
     pub fn is_supported() -> bool {
         unsafe { ffi::image_analyzer::vk_image_analyzer_is_supported() != 0 }
     }
 
+    /// Returns the text-recognition languages supported by VisionKit on this system.
     pub fn supported_text_recognition_languages() -> Result<Vec<String>, VisionKitError> {
         let mut languages_json: *mut c_char = ptr::null_mut();
         let mut err_msg: *mut c_char = ptr::null_mut();
@@ -181,6 +209,7 @@ impl ImageAnalyzer {
         }
     }
 
+    /// Runs the matching VisionKit analyze image at path operation.
     pub fn analyze_image_at_path<P: AsRef<Path>>(
         &self,
         path: P,
@@ -196,6 +225,7 @@ impl ImageAnalyzer {
         )
     }
 
+    /// Runs the matching VisionKit analyze ns image at path operation.
     pub fn analyze_ns_image_at_path<P: AsRef<Path>>(
         &self,
         path: P,
@@ -211,6 +241,7 @@ impl ImageAnalyzer {
         )
     }
 
+    /// Runs the matching VisionKit analyze cg image at path operation.
     pub fn analyze_cg_image_at_path<P: AsRef<Path>>(
         &self,
         path: P,
@@ -226,6 +257,7 @@ impl ImageAnalyzer {
         )
     }
 
+    /// Runs the matching VisionKit analyze ci image at path operation.
     pub fn analyze_ci_image_at_path<P: AsRef<Path>>(
         &self,
         path: P,
@@ -241,6 +273,7 @@ impl ImageAnalyzer {
         )
     }
 
+    /// Runs the matching VisionKit analyze pixel buffer at path operation.
     pub fn analyze_pixel_buffer_at_path<P: AsRef<Path>>(
         &self,
         path: P,
