@@ -861,6 +861,8 @@ impl LiveTextInteraction {
         Ok(Self { token })
     }
 
+    #[cfg(feature = "async")]
+    #[allow(dead_code, reason = "used by the optional async API surface")]
     pub(crate) fn raw_token(&self) -> *mut c_void {
         self.token
     }

@@ -1,3 +1,5 @@
+#![cfg(feature = "async")]
+
 /// Tests for `async_api` module.
 ///
 /// Uses `visionkit::async_api::block_on` to drive futures synchronously while
