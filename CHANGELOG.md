@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.4] - 2026-05-20
+
+- Widen `doom-fish-utils` dependency bound to `<0.4` so the 0.3.x SPSC-ring release resolves cleanly. No source changes.
+
 ## [0.3.3] - 2026-05-18
 
 - added concise public-item doc comments across the non-FFI VisionKit wrappers and raised rustdoc coverage above the release target
