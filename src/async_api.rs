@@ -53,6 +53,7 @@ use std::sync::Arc;
 use std::task::{Context, Poll, Wake, Waker};
 
 use doom_fish_utils::completion::{error_from_cstr, AsyncCompletion, AsyncCompletionFuture};
+use doom_fish_utils::panic_safe::catch_user_panic;
 use serde::Deserialize;
 
 use crate::error::VisionKitError;
@@ -105,18 +106,20 @@ unsafe fn cstring_result_to_string(ptr: *const c_void) -> String {
 // ============================================================================
 
 extern "C" fn analyze_cb(result: *const c_void, error: *const i8, ctx: *mut c_void) {
-    if !error.is_null() {
-        let msg = unsafe { error_from_cstr(error) };
-        unsafe { AsyncCompletion::<ImageAnalysis>::complete_err(ctx, msg) };
-    } else if !result.is_null() {
-        // result is a retained VKImageAnalysisBox pointer
-        let analysis = ImageAnalysis::from_token(result.cast_mut());
-        unsafe { AsyncCompletion::complete_ok(ctx, analysis) };
-    } else {
-        unsafe {
-            AsyncCompletion::<ImageAnalysis>::complete_err(ctx, "Unknown error".into());
-        };
-    }
+    catch_user_panic("visionkit::analyze_cb", move || {
+        if !error.is_null() {
+            let msg = unsafe { error_from_cstr(error) };
+            unsafe { AsyncCompletion::<ImageAnalysis>::complete_err(ctx, msg) };
+        } else if !result.is_null() {
+            // result is a retained VKImageAnalysisBox pointer
+            let analysis = ImageAnalysis::from_token(result.cast_mut());
+            unsafe { AsyncCompletion::complete_ok(ctx, analysis) };
+        } else {
+            unsafe {
+                AsyncCompletion::<ImageAnalysis>::complete_err(ctx, "Unknown error".into());
+            };
+        }
+    });
 }
 
 /// Future returned by [`AsyncImageAnalyzer::analyze_image_at_path`].
@@ -231,27 +234,31 @@ impl AsyncImageAnalyzer {
 // ============================================================================
 
 extern "C" fn subjects_cb(result: *const c_void, error: *const i8, ctx: *mut c_void) {
-    if !error.is_null() {
-        let msg = unsafe { error_from_cstr(error) };
-        unsafe { AsyncCompletion::<String>::complete_err(ctx, msg) };
-    } else if !result.is_null() {
-        let json = unsafe { cstring_result_to_string(result) };
-        unsafe { AsyncCompletion::complete_ok(ctx, json) };
-    } else {
-        unsafe { AsyncCompletion::<String>::complete_err(ctx, "Unknown error".into()) };
-    }
+    catch_user_panic("visionkit::subjects_cb", move || {
+        if !error.is_null() {
+            let msg = unsafe { error_from_cstr(error) };
+            unsafe { AsyncCompletion::<String>::complete_err(ctx, msg) };
+        } else if !result.is_null() {
+            let json = unsafe { cstring_result_to_string(result) };
+            unsafe { AsyncCompletion::complete_ok(ctx, json) };
+        } else {
+            unsafe { AsyncCompletion::<String>::complete_err(ctx, "Unknown error".into()) };
+        }
+    });
 }
 
 extern "C" fn subject_at_cb(result: *const c_void, error: *const i8, ctx: *mut c_void) {
-    if !error.is_null() {
-        let msg = unsafe { error_from_cstr(error) };
-        unsafe { AsyncCompletion::<String>::complete_err(ctx, msg) };
-    } else if !result.is_null() {
-        let json = unsafe { cstring_result_to_string(result) };
-        unsafe { AsyncCompletion::complete_ok(ctx, json) };
-    } else {
-        unsafe { AsyncCompletion::<String>::complete_err(ctx, "Unknown error".into()) };
-    }
+    catch_user_panic("visionkit::subject_at_cb", move || {
+        if !error.is_null() {
+            let msg = unsafe { error_from_cstr(error) };
+            unsafe { AsyncCompletion::<String>::complete_err(ctx, msg) };
+        } else if !result.is_null() {
+            let json = unsafe { cstring_result_to_string(result) };
+            unsafe { AsyncCompletion::complete_ok(ctx, json) };
+        } else {
+            unsafe { AsyncCompletion::<String>::complete_err(ctx, "Unknown error".into()) };
+        }
+    });
 }
 
 /// Future returned by [`AsyncOverlaySubjects::subjects`].
