@@ -9,9 +9,9 @@
 
 /// Re-exports the core VisionKit analyzer types.
 pub mod analyzer;
-/// Exposes VisionKit barcode-area wrappers.
+/// Availability metadata for the iOS-only barcode area.
 pub mod barcode;
-/// Exposes the VisionKit data scanner wrapper.
+/// Availability metadata for the iOS-only data scanner.
 pub mod data_scanner_view_controller;
 /// Exposes error types returned by the VisionKit wrappers.
 pub mod error;
@@ -24,13 +24,13 @@ pub mod image_analyzer;
 /// Exposes VisionKit live text and overlay wrappers.
 pub mod live_text_interaction;
 mod private;
-/// Exposes VisionKit recognized-item availability wrappers.
+/// Availability metadata for the iOS-only recognized-item area.
 pub mod recognized_item;
-/// Exposes VisionKit recognized-text availability wrappers.
+/// Availability metadata for the iOS-only recognized-text area.
 pub mod recognized_text;
 /// Exposes VisionKit availability metadata types.
 pub mod support;
-/// Exposes the VisionKit document camera wrapper.
+/// Availability metadata for the iOS-only document camera.
 pub mod vn_document_camera_view_controller;
 
 #[cfg(feature = "async")]

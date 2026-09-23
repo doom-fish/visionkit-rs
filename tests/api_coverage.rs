@@ -1,21 +1,30 @@
+use std::ffi::c_void;
+use std::mem::size_of;
+
 use visionkit::{analyzer, prelude::*};
 
 #[test]
 fn compatibility_reexports_still_exist() {
-    let _ = analyzer::ImageAnalysisTypes::TEXT;
-    let _ = analyzer::ImageOrientation::Up;
+    assert_eq!(analyzer::ImageAnalysisTypes::TEXT, ImageAnalysisTypes::TEXT);
+    assert_eq!(analyzer::ImageAnalysisTypes::TEXT.bits(), 1);
+    assert_eq!(analyzer::ImageOrientation::Up.raw_value(), 1);
 }
 
 #[test]
 fn prelude_exports_requested_area_types() {
-    let _ = std::mem::size_of::<Barcode>();
-    let _ = std::mem::size_of::<DataScannerViewController>();
-    let _ = std::mem::size_of::<ImageAnalysis>();
-    let _ = std::mem::size_of::<ImageAnalyzer>();
-    let _ = std::mem::size_of::<LiveTextInteraction>();
-    let _ = std::mem::size_of::<LiveTextInteractionDelegate>();
-    let _ = std::mem::size_of::<LiveTextSubject>();
-    let _ = std::mem::size_of::<RecognizedItem>();
-    let _ = std::mem::size_of::<RecognizedText>();
-    let _ = std::mem::size_of::<VNDocumentCameraViewController>();
+    let handle = size_of::<*mut c_void>();
+    assert_eq!(size_of::<ImageAnalysis>(), handle);
+    assert_eq!(size_of::<ImageAnalyzer>(), handle);
+    assert_eq!(size_of::<LiveTextInteraction>(), handle);
+    assert_eq!(size_of::<LiveTextInteractionDelegate>(), handle);
+    assert_eq!(size_of::<LiveTextSubject>(), handle);
+}
+
+#[test]
+fn ios_only_areas_are_metadata_without_a_wrapped_object() {
+    assert_eq!(size_of::<Barcode>(), 0);
+    assert_eq!(size_of::<DataScannerViewController>(), 0);
+    assert_eq!(size_of::<RecognizedItem>(), 0);
+    assert_eq!(size_of::<RecognizedText>(), 0);
+    assert_eq!(size_of::<VNDocumentCameraViewController>(), 0);
 }

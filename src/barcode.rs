@@ -6,7 +6,7 @@ use crate::ffi;
 use crate::private::{error_from_status, parse_area_support_info_ptr};
 use crate::support::AreaSupportInfo;
 
-/// Wraps the VisionKit barcode area.
+/// Availability metadata for the iOS-only `RecognizedItem.Barcode`; it is not wrapped on macOS.
 pub struct Barcode;
 
 impl Barcode {

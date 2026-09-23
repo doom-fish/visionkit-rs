@@ -1,10 +1,11 @@
-# visionkit-rs coverage audit (vs MacOSX26.2.sdk)
+# visionkit-rs coverage audit (vs MacOSX26.2.sdk, re-checked against 26.5)
 
 SDK_PUBLIC_SYMBOLS: 89
-VERIFIED: 89
+VERIFIED: 85
+PARTIAL: 4
 GAPS: 0
 EXEMPT: 0
-COVERAGE_PCT: 100.00%
+COVERAGE_PCT: 95.51%
 
 Methodology:
 - Source of truth: `VisionKit.framework/.../VisionKit.swiftinterface`; the macOS public headers in the SDK are empty comment stubs.
@@ -12,6 +13,10 @@ Methodology:
 - Excluded duplicate default implementations in `extension ImageAnalysisOverlayViewDelegate`, compiler-generated conformance/typealias boilerplate, and inherited AppKit boilerplate such as `init(coder:)` / `viewDidMoveToSuperview()`.
 - Properties count once; when the Rust API only exposes part of a property surface, the `Wrapped by` or `Notes` column calls that out explicitly.
 - Crate-only availability helpers for iOS-only `DataScannerViewController`, `VNDocumentCameraViewController`, `RecognizedItem`, `RecognizedText`, and `Barcode` are outside the macOS swiftinterface and were excluded from the denominator.
+- Re-checked on 2026-09-23 against the installed MacOSX26.5.sdk `VisionKit.swiftinterface`: the public macOS surface is unchanged from 26.2, so the denominator is still 89.
+- PARTIAL rows are wrapped but miss part of the Apple surface, and they are not counted in COVERAGE_PCT. The `NSImage` and `CIImage` overloads only accept a file path. The `CGImage` and `CVPixelBuffer` overloads accept in-memory objects when the `apple-cf` feature is on.
+- `ImageAnalysisOverlayViewDelegate` rows are answered from a Swift-side configuration and recorded as events that Rust polls with `recorded_events`; no Rust callback runs while VisionKit calls the delegate.
+- The iOS-only areas are not counted anywhere: on macOS their Rust types are zero-sized availability metadata and their constructors always fail.
 
 ## 🟢 VERIFIED
 | Symbol | Kind | Header | Wrapped by |
@@ -33,10 +38,8 @@ Methodology:
 | ImageAnalyzer.init() | func | VisionKit.swiftinterface | ImageAnalyzer::new |
 | ImageAnalyzer.isSupported | class var | VisionKit.swiftinterface | ImageAnalyzer::is_supported |
 | ImageAnalyzer.supportedTextRecognitionLanguages | class var | VisionKit.swiftinterface | ImageAnalyzer::supported_text_recognition_languages |
-| ImageAnalyzer.analyze(_ image:orientation:configuration:) | func | VisionKit.swiftinterface | ImageAnalyzer::analyze_ns_image_at_path |
-| ImageAnalyzer.analyze(_ cgImage:orientation:configuration:) | func | VisionKit.swiftinterface | ImageAnalyzer::analyze_cg_image_at_path |
-| ImageAnalyzer.analyze(_ ciImage:orientation:configuration:) | func | VisionKit.swiftinterface | ImageAnalyzer::analyze_ci_image_at_path |
-| ImageAnalyzer.analyze(_ pixelBuffer:orientation:configuration:) | func | VisionKit.swiftinterface | ImageAnalyzer::analyze_pixel_buffer_at_path |
+| ImageAnalyzer.analyze(_ cgImage:orientation:configuration:) | func | VisionKit.swiftinterface | ImageAnalyzer::analyze_cg_image (in-memory, `apple-cf` feature), ImageAnalyzer::analyze_cg_image_at_path |
+| ImageAnalyzer.analyze(_ pixelBuffer:orientation:configuration:) | func | VisionKit.swiftinterface | ImageAnalyzer::analyze_pixel_buffer (in-memory, `apple-cf` feature), ImageAnalyzer::analyze_pixel_buffer_at_path |
 | ImageAnalyzer.analyze(imageAt:orientation:configuration:) | func | VisionKit.swiftinterface | ImageAnalyzer::analyze_image_at_path |
 | ImageAnalysisOverlayView | class | VisionKit.swiftinterface | LiveTextInteraction |
 | ImageAnalysisOverlayView.InteractionTypes | struct | VisionKit.swiftinterface | LiveTextInteractionTypes |
@@ -48,8 +51,6 @@ Methodology:
 | ImageAnalysisOverlayView.InteractionTypes.dataDetectors | static var | VisionKit.swiftinterface | LiveTextInteractionTypes::DATA_DETECTORS |
 | ImageAnalysisOverlayView.InteractionTypes.imageSubject | static var | VisionKit.swiftinterface | LiveTextInteractionTypes::IMAGE_SUBJECT |
 | ImageAnalysisOverlayView.InteractionTypes.visualLookUp | static var | VisionKit.swiftinterface | LiveTextInteractionTypes::VISUAL_LOOK_UP |
-| ImageAnalysisOverlayView.init(frame:) | func | VisionKit.swiftinterface | LiveTextInteraction::new (constructs frame .zero) |
-| ImageAnalysisOverlayView.analysis | var | VisionKit.swiftinterface | LiveTextInteraction::set_analysis (setter only) |
 | ImageAnalysisOverlayView.preferredInteractionTypes | var | VisionKit.swiftinterface | LiveTextInteraction::{preferred_interaction_types, set_preferred_interaction_types} |
 | ImageAnalysisOverlayView.activeInteractionTypes | var | VisionKit.swiftinterface | LiveTextInteraction::active_interaction_types |
 | ImageAnalysisOverlayView.selectableItemsHighlighted | var | VisionKit.swiftinterface | LiveTextInteraction::{selectable_items_highlighted, set_selectable_items_highlighted} |
@@ -67,7 +68,6 @@ Methodology:
 | ImageAnalysisOverlayView.isSupplementaryInterfaceHidden | var | VisionKit.swiftinterface | LiveTextInteraction::{is_supplementary_interface_hidden, set_supplementary_interface_hidden} |
 | ImageAnalysisOverlayView.setSupplementaryInterfaceHidden(_:animated:) | func | VisionKit.swiftinterface | LiveTextInteraction::set_supplementary_interface_hidden |
 | ImageAnalysisOverlayView.supplementaryInterfaceContentInsets | var | VisionKit.swiftinterface | LiveTextInteraction::{supplementary_interface_content_insets, set_supplementary_interface_content_insets} |
-
 | ImageAnalysisOverlayViewDelegate | protocol | VisionKit.swiftinterface | LiveTextInteractionDelegate |
 | ImageAnalysisOverlayViewDelegate.overlayView(_:shouldBeginAt:forAnalysisType:) | func | VisionKit.swiftinterface | LiveTextInteractionDelegate::{recorded_events, set_should_begin} |
 | ImageAnalysisOverlayViewDelegate.contentsRect(for:) | func | VisionKit.swiftinterface | LiveTextInteractionDelegate::{contents_rect_override, set_contents_rect_override, recorded_events} |
@@ -106,6 +106,14 @@ Methodology:
 | ImageAnalysisOverlayView.highlightedSubjects | var | VisionKit.swiftinterface | LiveTextInteraction::{highlighted_subjects, set_highlighted_subjects} |
 | ImageAnalysisOverlayView.subject(at:) | func | VisionKit.swiftinterface | LiveTextInteraction::subject_at_point |
 | ImageAnalysisOverlayView.image(for:) | func | VisionKit.swiftinterface | LiveTextInteraction::image_for_subjects |
+
+## 🟡 PARTIAL
+| Symbol | Kind | Header | Wrapped by | Missing |
+| --- | --- | --- | --- | --- |
+| ImageAnalyzer.analyze(_ image:orientation:configuration:) | func | VisionKit.swiftinterface | ImageAnalyzer::analyze_ns_image_at_path | Path only: Swift loads the `NSImage` from a file; no in-memory `NSImage` input. |
+| ImageAnalyzer.analyze(_ ciImage:orientation:configuration:) | func | VisionKit.swiftinterface | ImageAnalyzer::analyze_ci_image_at_path | Path only: Swift loads the `CIImage` from a file; no in-memory `CIImage` input. |
+| ImageAnalysisOverlayView.init(frame:) | func | VisionKit.swiftinterface | LiveTextInteraction::new | Always constructs a `.zero` frame; the overlay frame cannot be set. |
+| ImageAnalysisOverlayView.analysis | var | VisionKit.swiftinterface | LiveTextInteraction::set_analysis | Setter only; the current analysis cannot be read back. |
 
 ## 🔴 GAPS
 | Symbol | Kind | Header | Notes |

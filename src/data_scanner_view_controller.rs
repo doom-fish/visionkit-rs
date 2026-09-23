@@ -6,7 +6,7 @@ use crate::ffi;
 use crate::private::{error_from_status, parse_area_support_info_ptr};
 use crate::support::AreaSupportInfo;
 
-/// Wraps the VisionKit DataScannerViewController counterpart.
+/// Availability metadata for the iOS-only `DataScannerViewController`; it is not wrapped on macOS.
 pub struct DataScannerViewController;
 
 impl DataScannerViewController {
@@ -34,7 +34,7 @@ impl DataScannerViewController {
         Ok(Self::support_info()?.available_on_current_platform)
     }
 
-    /// Creates the VisionKit `DataScannerViewController` wrapper.
+    /// Always returns [`VisionKitError::UnavailableOnThisPlatform`] on macOS.
     pub fn new() -> Result<Self, VisionKitError> {
         let info = Self::support_info()?;
         if info.available_on_current_platform {

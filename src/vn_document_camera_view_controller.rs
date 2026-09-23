@@ -6,7 +6,7 @@ use crate::ffi;
 use crate::private::{error_from_status, parse_area_support_info_ptr};
 use crate::support::AreaSupportInfo;
 
-/// Wraps the VisionKit VNDocumentCameraViewController counterpart.
+/// Availability metadata for the iOS-only `VNDocumentCameraViewController`; it is not wrapped on macOS.
 pub struct VNDocumentCameraViewController;
 
 impl VNDocumentCameraViewController {
@@ -37,7 +37,7 @@ impl VNDocumentCameraViewController {
         Ok(Self::support_info()?.available_on_current_platform)
     }
 
-    /// Creates the VisionKit `VNDocumentCameraViewController` wrapper.
+    /// Always returns [`VisionKitError::UnavailableOnThisPlatform`] on macOS.
     pub fn new() -> Result<Self, VisionKitError> {
         let info = Self::support_info()?;
         if info.available_on_current_platform {

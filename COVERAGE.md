@@ -6,6 +6,8 @@ Audited against:
 - iOS 26.2 `VisionKit.swiftinterface`
 - iOS 26.2 `VNDocumentCameraViewController.h` / `VNDocumentCameraScan.h`
 
+Re-checked on 2026-09-23 against the installed macOS 26.5 `VisionKit.swiftinterface`; the public macOS surface is unchanged. 🟡 rows are wrapped but miss part of the Apple surface.
+
 ## ✅ Implemented macOS surface
 
 | Area | Apple API row | Status | Notes |
@@ -14,14 +16,14 @@ Audited against:
 | ImageAnalyzer | `class var isSupported` | ✅ implemented | `ImageAnalyzer::is_supported` |
 | ImageAnalyzer | `class var supportedTextRecognitionLanguages` | ✅ implemented | `ImageAnalyzer::supported_text_recognition_languages` |
 | ImageAnalyzer | `analyze(imageAt:orientation:configuration:)` | ✅ implemented | `ImageAnalyzer::analyze_image_at_path` |
-| ImageAnalyzer | `analyze(_ image: NSImage, orientation:, configuration:)` | ✅ implemented | `ImageAnalyzer::analyze_ns_image_at_path` loads the `NSImage` in Swift |
-| ImageAnalyzer | `analyze(_ cgImage: CGImage, orientation:, configuration:)` | ✅ implemented | `ImageAnalyzer::analyze_cg_image_at_path` loads the `CGImage` in Swift |
-| ImageAnalyzer | `analyze(_ ciImage: CIImage, orientation:, configuration:)` | ✅ implemented | `ImageAnalyzer::analyze_ci_image_at_path` loads the `CIImage` in Swift |
-| ImageAnalyzer | `analyze(_ pixelBuffer: CVPixelBuffer, orientation:, configuration:)` | ✅ implemented | `ImageAnalyzer::analyze_pixel_buffer_at_path` converts the image into a pixel buffer in Swift |
+| ImageAnalyzer | `analyze(_ image: NSImage, orientation:, configuration:)` | 🟡 partial | `ImageAnalyzer::analyze_ns_image_at_path` loads the `NSImage` from a file in Swift; there is no in-memory `NSImage` input |
+| ImageAnalyzer | `analyze(_ cgImage: CGImage, orientation:, configuration:)` | ✅ implemented | `ImageAnalyzer::analyze_cg_image` takes an in-memory `apple_cf::cg::CGImage` (`apple-cf` feature); `analyze_cg_image_at_path` loads one from a file |
+| ImageAnalyzer | `analyze(_ ciImage: CIImage, orientation:, configuration:)` | 🟡 partial | `ImageAnalyzer::analyze_ci_image_at_path` loads the `CIImage` from a file in Swift; there is no in-memory `CIImage` input |
+| ImageAnalyzer | `analyze(_ pixelBuffer: CVPixelBuffer, orientation:, configuration:)` | ✅ implemented | `ImageAnalyzer::analyze_pixel_buffer` takes an in-memory `apple_cf::cv::CVPixelBuffer` (`apple-cf` feature); `analyze_pixel_buffer_at_path` converts a file into a pixel buffer in Swift |
 | ImageAnalysis | `transcript` | ✅ implemented | `ImageAnalysis::transcript` |
 | ImageAnalysis | `hasResults(for:)` | ✅ implemented | `ImageAnalysis::has_results` |
-| LiveTextInteraction (`ImageAnalysisOverlayView`) | `init(frame:)` | ✅ implemented | `LiveTextInteraction::new` constructs the overlay view |
-| LiveTextInteraction (`ImageAnalysisOverlayView`) | `analysis` | ✅ implemented | `LiveTextInteraction::set_analysis` |
+| LiveTextInteraction (`ImageAnalysisOverlayView`) | `init(frame:)` | 🟡 partial | `LiveTextInteraction::new` constructs the overlay view with a `.zero` frame; the frame cannot be set |
+| LiveTextInteraction (`ImageAnalysisOverlayView`) | `analysis` | 🟡 partial | `LiveTextInteraction::set_analysis` (setter only) |
 | LiveTextInteraction (`ImageAnalysisOverlayView`) | `preferredInteractionTypes` | ✅ implemented | getter + setter |
 | LiveTextInteraction (`ImageAnalysisOverlayView`) | `activeInteractionTypes` | ✅ implemented | getter |
 | LiveTextInteraction (`ImageAnalysisOverlayView`) | `selectableItemsHighlighted` | ✅ implemented | getter + setter |
@@ -53,6 +55,8 @@ Audited against:
 | LiveTextInteraction (`ImageAnalysisOverlayView`) | `SubjectUnavailable`, `Subject`, `beginSubjectAnalysisIfNecessary()`, `subjects`, `highlightedSubjects`, `subject(at:)`, `image(for:)` | ✅ implemented | `LiveTextSubjectUnavailable`, `LiveTextSubject`, `LiveTextInteraction::{begin_subject_analysis_if_necessary, subjects, highlighted_subjects, set_highlighted_subjects, subject_at_point, image_for_subjects}` and PNG image extraction. |
 
 ## ⏭️ Skipped iOS-only surface
+
+These areas are not wrapped and are not counted as covered. On macOS their Rust types are zero-sized availability metadata: `support_info()` describes the iOS API, and the constructors always return `VisionKitError::UnavailableOnThisPlatform`.
 
 | Area | Apple API row | Status | Reason |
 | --- | --- | --- | --- |

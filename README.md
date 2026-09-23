@@ -2,7 +2,7 @@
 
 Safe Rust bindings for Apple's `VisionKit.framework` on macOS.
 
-> **Status:** v0.3.0 adds a Tier-1 async API module on top of full v0.2.x coverage of `ImageAnalysisOverlayView`, `ImageAnalyzer`, `ImageAnalysis`, and availability metadata for the iOS-only areas.
+> **Status:** wraps the macOS `ImageAnalyzer`, `ImageAnalysis`, and `ImageAnalysisOverlayView` surface; four rows are partial (see [`COVERAGE.md`](COVERAGE.md)). The iOS-only areas are availability metadata only.
 
 ## Quick start
 
@@ -64,9 +64,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 - `ImageAnalyzer::is_supported` and `supported_text_recognition_languages`
 - `ImageAnalyzerConfiguration`, `ImageAnalysisTypes`, and `ImageOrientation`
 - File-path based analysis through every public macOS analyzer overload: URL, `NSImage`, `CGImage`, `CIImage`, and `CVPixelBuffer`
+- In-memory `CGImage` and `CVPixelBuffer` analysis (`ImageAnalyzer::analyze_cg_image`, `analyze_pixel_buffer`, and their async counterparts) with the `apple-cf` feature
 - `ImageAnalysis::transcript` and `has_results`
-- full `LiveTextInteraction` coverage for macOS `ImageAnalysisOverlayView`, including delegates, menu tags, selection metadata, tracking/content views, fonts, and subject analysis
-- `VNDocumentCameraViewController`, `DataScannerViewController`, `RecognizedText`, `Barcode`, and `RecognizedItem` availability metadata on macOS
+- `LiveTextInteraction` coverage for macOS `ImageAnalysisOverlayView`, including delegates, menu tags, selection metadata, tracking/content views, fonts, and subject analysis. Delegate calls are answered from a configuration you set and recorded as events you poll; they do not call back into Rust.
+- `VNDocumentCameraViewController`, `DataScannerViewController`, `RecognizedText`, `Barcode`, and `RecognizedItem` availability metadata on macOS. These iOS-only APIs are not wrapped: their constructors always fail on macOS.
+
+## Threading
+
+- VisionKit finishes `ImageAnalyzer` work on the main queue, although its Swift API is not bound to the main actor. A synchronous analysis on the main thread pumps the main run loop while it waits. On any other thread it needs the main thread to run its run loop (an AppKit app, or a CLI whose main thread calls `CFRunLoopRun`). If the main queue is not serviced within 10 seconds, the call returns `VisionKitError::TimedOut` naming the main thread. Any analysis times out after 60 seconds.
+- `#[tokio::main]` and other executors that block the main thread starve VisionKit. Run the executor on another thread and keep the main thread in its run loop, or call the synchronous API from the main thread.
+- `LiveTextInteraction` and its companion types wrap main-actor AppKit views. Their calls run inline on the main thread. From another thread, each call waits for the main thread (60 seconds, or 10 seconds for subject queries) and fails if the main thread does not run its run loop.
 
 ## Availability
 

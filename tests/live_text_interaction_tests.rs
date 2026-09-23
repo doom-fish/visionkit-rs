@@ -32,14 +32,18 @@ fn live_text_interaction_round_trips_basic_state() -> Result<(), Box<dyn std::er
 
 #[test]
 fn live_text_interaction_extended_types_are_exported() {
-    let _ = std::mem::size_of::<LiveTextInteractionDelegate>();
-    let _ = std::mem::size_of::<LiveTextContentView>();
-    let _ = std::mem::size_of::<LiveTextTrackingImageView>();
-    let _ = std::mem::size_of::<LiveTextSubject>();
-    let _ = std::mem::size_of::<LiveTextImageData>();
-    let _ = LiveTextSubjectUnavailable::ImageUnavailable;
-    let _ = LiveTextTextRange::new(0, 0);
-    let _ = LiveTextMenuTag::new(0);
+    let handle = std::mem::size_of::<*mut std::ffi::c_void>();
+    assert_eq!(std::mem::size_of::<LiveTextInteractionDelegate>(), handle);
+    assert_eq!(std::mem::size_of::<LiveTextContentView>(), handle);
+    assert_eq!(std::mem::size_of::<LiveTextTrackingImageView>(), handle);
+    assert_eq!(std::mem::size_of::<LiveTextSubject>(), handle);
+    assert_eq!(
+        LiveTextSubjectUnavailable::ImageUnavailable.to_string(),
+        "subject image is unavailable"
+    );
+    let range = LiveTextTextRange::new(3, 4);
+    assert_eq!((range.location, range.length, range.end()), (3, 4, 7));
+    assert_eq!(LiveTextMenuTag::new(9).raw_value(), 9);
     black_box(LiveTextInteraction::subject_at_point);
     let image_for_subjects_fn: fn(&LiveTextInteraction, &[LiveTextSubject]) -> Result<
         LiveTextImageData,
