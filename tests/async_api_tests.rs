@@ -2,14 +2,57 @@
 
 /// Tests for `async_api` module.
 ///
-/// Uses `visionkit::async_api::block_on` to drive futures synchronously while
-/// pumping the Obj-C main run loop. Where `ImageAnalyzer` is not supported
-/// (CI / older hardware) tests are skipped gracefully.
+/// Uses `visionkit::async_api::block_on` to drive futures synchronously.
+/// Where `ImageAnalyzer` is not supported (CI / older hardware) tests are
+/// skipped gracefully.
+use std::future::Future;
 use std::path::PathBuf;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+use std::thread;
+use std::time::{Duration, Instant};
 
 use visionkit::async_api::{block_on, AnalysisSubjectBounds, AsyncImageAnalyzer, AsyncOverlaySubjects};
 use visionkit::{ImageAnalysisTypes, ImageAnalyzerConfiguration, ImageOrientation};
 use visionkit::LiveTextInteraction;
+
+struct PollCounter {
+    polls: usize,
+    ready_at: Instant,
+    timer_started: bool,
+}
+
+impl Future for PollCounter {
+    type Output = usize;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<usize> {
+        self.polls += 1;
+        if Instant::now() >= self.ready_at {
+            return Poll::Ready(self.polls);
+        }
+        if !self.timer_started {
+            self.timer_started = true;
+            let waker = cx.waker().clone();
+            let ready_at = self.ready_at;
+            thread::spawn(move || {
+                thread::sleep(ready_at.saturating_duration_since(Instant::now()));
+                waker.wake();
+            });
+        }
+        Poll::Pending
+    }
+}
+
+#[test]
+fn test_block_on_parks_off_the_main_thread() {
+    assert_ne!(thread::current().name(), Some("main"));
+    let polls = block_on(PollCounter {
+        polls: 0,
+        ready_at: Instant::now() + Duration::from_millis(200),
+        timer_started: false,
+    });
+    assert!(polls <= 3, "block_on polled {polls} times instead of parking");
+}
 
 fn skip_if_unsupported() -> bool {
     if !AsyncImageAnalyzer::is_supported() {

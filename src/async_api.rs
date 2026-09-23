@@ -46,11 +46,13 @@
 //! # });
 //! ```
 
-use std::ffi::{c_void, CStr};
+use std::ffi::{c_int, c_void, CStr};
 use std::future::Future;
 use std::pin::Pin;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::task::{Context, Poll, Wake, Waker};
+use std::thread::{self, Thread};
 
 use doom_fish_utils::completion::{error_from_cstr, AsyncCompletion, AsyncCompletionFuture};
 use doom_fish_utils::panic_safe::catch_user_panic;
@@ -387,19 +389,33 @@ impl<'a> AsyncOverlaySubjects<'a> {
 // block_on — run-loop-aware executor
 // ============================================================================
 
-struct NoopWake;
-impl Wake for NoopWake {
-    fn wake(self: Arc<Self>) {}
-    fn wake_by_ref(self: &Arc<Self>) {}
+struct ThreadWaker {
+    thread: Thread,
+    woken: AtomicBool,
 }
 
-/// Drive a VisionKit async future to completion while pumping the Obj-C main
-/// run loop between polls.
+impl Wake for ThreadWaker {
+    fn wake(self: Arc<Self>) {
+        self.wake_by_ref();
+    }
+
+    fn wake_by_ref(self: &Arc<Self>) {
+        self.woken.store(true, Ordering::Release);
+        self.thread.unpark();
+    }
+}
+
+extern "C" {
+    fn pthread_main_np() -> c_int;
+}
+
+/// Drive a VisionKit async future to completion on the current thread.
 ///
-/// **Must be called from the main thread.** VisionKit Swift `Task { @MainActor
-/// in }` thunks dispatch work to the main actor; without run-loop pumping the
-/// calling thread would deadlock when the main run loop is not free (e.g.
-/// inside `pollster::block_on`).
+/// On the main thread it pumps the Obj-C main run loop until the future is
+/// woken, because VisionKit completes its work through the main queue (and
+/// the overlay-subject queries run on the main actor). On any other thread it
+/// parks until woken; the futures then complete only while the main thread is
+/// running its run loop, as it does in an AppKit app.
 ///
 /// # Example
 ///
@@ -415,16 +431,23 @@ impl Wake for NoopWake {
 /// });
 /// ```
 pub fn block_on<F: Future>(future: F) -> F::Output {
-    let waker = Waker::from(Arc::new(NoopWake));
-    let cx = &mut Context::from_waker(&waker);
+    let on_main_thread = unsafe { pthread_main_np() } != 0;
+    let state = Arc::new(ThreadWaker {
+        thread: thread::current(),
+        woken: AtomicBool::new(false),
+    });
+    let waker = Waker::from(Arc::clone(&state));
+    let mut cx = Context::from_waker(&waker);
     let mut future = std::pin::pin!(future);
     loop {
-        match future.as_mut().poll(cx) {
-            Poll::Ready(val) => return val,
-            Poll::Pending => {
-                // Pump Obj-C RunLoop.main for 10 ms so Swift @MainActor Tasks
-                // can make progress before the next poll.
+        if let Poll::Ready(output) = future.as_mut().poll(&mut cx) {
+            return output;
+        }
+        while !state.woken.swap(false, Ordering::Acquire) {
+            if on_main_thread {
                 unsafe { ffi::image_analyzer::vk_pump_main_run_loop(10) };
+            } else {
+                thread::park();
             }
         }
     }

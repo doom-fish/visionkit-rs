@@ -3,8 +3,8 @@
 /// Demonstrates `AsyncImageAnalyzer::analyze_image_at_path` (true-async Future)
 /// and the `AsyncOverlaySubjects` futures for subject queries.
 /// Uses `visionkit::async_api::block_on` which pumps the Obj-C main run loop
-/// while driving the future — required because `VisionKit` Swift thunks dispatch
-/// internally to the main actor.
+/// while driving the future — required because `VisionKit` completes its work
+/// through the main queue.
 use std::path::PathBuf;
 
 use visionkit::async_api::{block_on, AsyncImageAnalyzer};

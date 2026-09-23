@@ -57,7 +57,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-**Note:** `block_on` must be called from the **main thread**. It pumps the Obj-C `RunLoop.main` between polls so that `@MainActor` Swift tasks can make progress. Use any executor-agnostic async runtime (Tokio, async-std, etc.) with the provided futures — just ensure `RunLoop.main` is pumped externally if not using `block_on`.
+**Note:** VisionKit completes image analysis through the main queue. On the main thread `block_on` pumps the Obj-C main run loop until the future is woken; on other threads it parks, and the futures only complete while the main thread runs its run loop (an AppKit app, or a CLI whose main thread calls `CFRunLoopRun`). The futures also work with any other executor (Tokio, async-std, …) under the same condition.
 
 ## Highlights
 
