@@ -168,7 +168,10 @@ func vkPerformImageAnalysis(
         let path = try vkRequireFilePath(path, field: "path")
         let orientation = try vkImageOrientation(from: orientationRaw)
         let configuration = try vkAnalyzerConfiguration(from: configurationJson)
-        let analysis = try vk_block_on_main_actor_async {
+        let analysis = try vk_block_on_async(
+            mainQueueGraceSeconds: 10,
+            label: "image analysis"
+        ) {
             try await work(box, path, orientation, configuration)
         }
         outAnalysisToken.pointee = vkRetain(

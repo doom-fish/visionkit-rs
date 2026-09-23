@@ -37,7 +37,7 @@ public func vk_image_analyzer_analyze_image_async(
     let cfgStr: String? = configurationJson.map { String(cString: $0) }
 
     // Validate eagerly and synchronously so that error futures resolve without
-    // needing the main actor.  Only the actual `analyze()` awaits @MainActor.
+    // waiting for the analysis Task.
     guard ImageAnalyzer.isSupported else {
         VKBridgeError.analyzerNotSupported("ImageAnalyzer is not supported on this Mac")
             .description.withCString { cb(nil, $0, ctx) }
@@ -74,9 +74,8 @@ public func vk_image_analyzer_analyze_image_async(
         return
     }
 
-    // Only the actual Apple async call needs @MainActor.
     let capturedCtx = ctx
-    Task { @MainActor in
+    Task {
         do {
             let analysis = try await box.analyzer.analyze(
                 imageAt: URL(fileURLWithPath: rawPath),

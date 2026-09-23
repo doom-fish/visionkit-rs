@@ -115,10 +115,30 @@ final class VKAsyncResultBox<T>: @unchecked Sendable {
     }
 }
 
+final class VKMainQueueProbe: @unchecked Sendable {
+    private let lock = NSLock()
+    private var serviced = false
+
+    init() {
+        DispatchQueue.main.async { [self] in
+            lock.lock()
+            serviced = true
+            lock.unlock()
+        }
+    }
+
+    var wasServiced: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return serviced
+    }
+}
+
 func vkWaitForSemaphore(
     _ semaphore: DispatchSemaphore,
     timeoutSeconds: TimeInterval,
-    label: String
+    label: String,
+    mainQueueGraceSeconds: TimeInterval? = nil
 ) throws {
     if Thread.isMainThread {
         let deadline = Date().addingTimeInterval(timeoutSeconds)
@@ -135,6 +155,19 @@ func vkWaitForSemaphore(
         }
     } else {
         let timeout = DispatchTime.now() + .milliseconds(Int(timeoutSeconds * 1_000))
+        if let graceSeconds = mainQueueGraceSeconds {
+            let probe = VKMainQueueProbe()
+            let grace = DispatchTime.now() + .milliseconds(Int(graceSeconds * 1_000))
+            if semaphore.wait(timeout: min(grace, timeout)) == .success {
+                return
+            }
+            if !probe.wasServiced {
+                throw VKBridgeError.timedOut(
+                    "VisionKit \(label) needs the main thread to run its run loop, " +
+                        "and the main queue was not serviced within \(Int(graceSeconds)) seconds"
+                )
+            }
+        }
         if semaphore.wait(timeout: timeout) == .timedOut {
             throw VKBridgeError.timedOut(
                 "VisionKit \(label) timed out after \(Int(timeoutSeconds)) seconds"
@@ -145,12 +178,14 @@ func vkWaitForSemaphore(
 
 public func vk_block_on_async<T>(
     timeoutSeconds: TimeInterval = 60,
+    mainQueueGraceSeconds: TimeInterval? = nil,
+    label: String = "async call",
     work: @escaping () async throws -> T
 ) throws -> T {
     let semaphore = DispatchSemaphore(value: 0)
     let box = VKAsyncResultBox<T>()
 
-    Task {
+    let task = Task {
         do {
             box.store(.success(try await work()))
         } catch {
@@ -159,11 +194,17 @@ public func vk_block_on_async<T>(
         semaphore.signal()
     }
 
-    try vkWaitForSemaphore(
-        semaphore,
-        timeoutSeconds: timeoutSeconds,
-        label: "async call"
-    )
+    do {
+        try vkWaitForSemaphore(
+            semaphore,
+            timeoutSeconds: timeoutSeconds,
+            label: label,
+            mainQueueGraceSeconds: mainQueueGraceSeconds
+        )
+    } catch {
+        task.cancel()
+        throw error
+    }
 
     guard let result = box.load() else {
         throw VKBridgeError.unknown(
@@ -180,7 +221,7 @@ public func vk_block_on_main_actor_async<T>(
     let semaphore = DispatchSemaphore(value: 0)
     let box = VKAsyncResultBox<T>()
 
-    Task { @MainActor in
+    let task = Task { @MainActor in
         do {
             box.store(.success(try await work()))
         } catch {
@@ -189,11 +230,16 @@ public func vk_block_on_main_actor_async<T>(
         semaphore.signal()
     }
 
-    try vkWaitForSemaphore(
-        semaphore,
-        timeoutSeconds: timeoutSeconds,
-        label: "main-actor async call"
-    )
+    do {
+        try vkWaitForSemaphore(
+            semaphore,
+            timeoutSeconds: timeoutSeconds,
+            label: "main-actor async call"
+        )
+    } catch {
+        task.cancel()
+        throw error
+    }
 
     guard let result = box.load() else {
         throw VKBridgeError.unknown(

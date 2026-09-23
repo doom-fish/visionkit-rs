@@ -195,8 +195,7 @@ impl AsyncImageAnalyzer {
 
     /// Asynchronously analyze the image at `path` and return an [`ImageAnalysis`].
     ///
-    /// This is a true async wrapper: the Swift bridge spawns a
-    /// `Task { @MainActor … }`, calls
+    /// This is a true async wrapper: the Swift bridge spawns a `Task`, calls
     /// `await analyzer.analyze(imageAt:orientation:configuration:)`, and fires
     /// a C callback when done.  The returned [`AnalyzeImageFuture`] resolves
     /// when that callback fires.

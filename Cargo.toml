@@ -67,6 +67,10 @@ name = "async_overlay_lifetime"
 harness = false
 required-features = ["async"]
 
+[[test]]
+name = "main_run_loop_analysis"
+harness = false
+
 [profile.release]
 debug = "full"
 strip = "none"

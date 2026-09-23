@@ -25,10 +25,6 @@ fn skip_if_unsupported() -> bool {
 
 #[test]
 fn test_async_analyze_image_returns_analysis() {
-    // Run the pre-built 10_async_analyze example as a subprocess so that
-    // ImageAnalyzer.analyze() can use a proper run-loop / CFRunLoop. Running
-    // Swift async tasks that dispatch internally to CoreML queues inside a raw
-    // cargo-test thread causes the future to never resolve.
     let binary = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("target")
         .join("debug")

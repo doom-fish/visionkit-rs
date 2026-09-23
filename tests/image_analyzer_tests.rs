@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::time::{Duration, Instant};
 
 use visionkit::prelude::*;
 
@@ -7,6 +8,46 @@ fn configuration() -> ImageAnalyzerConfiguration {
         ImageAnalysisTypes::TEXT | ImageAnalysisTypes::MACHINE_READABLE_CODE,
     )
     .with_locales(["en-US"])
+}
+
+fn asset_path() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("examples")
+        .join("assets")
+        .join("live_text.png")
+}
+
+#[test]
+fn analysis_off_main_fails_fast_without_a_main_run_loop() -> Result<(), Box<dyn std::error::Error>>
+{
+    assert_ne!(std::thread::current().name(), Some("main"));
+    if !ImageAnalyzer::is_supported() {
+        return Ok(());
+    }
+    let analyzer = ImageAnalyzer::new()?;
+    let started = Instant::now();
+    let result =
+        analyzer.analyze_image_at_path(asset_path(), ImageOrientation::Up, &configuration());
+    assert!(started.elapsed() < Duration::from_secs(30));
+    match result {
+        Err(VisionKitError::TimedOut(message)) => assert!(message.contains("main thread")),
+        other => panic!("expected a main-thread timeout, got {:?}", other.map(|_| ())),
+    }
+    Ok(())
+}
+
+#[test]
+fn analysis_of_a_missing_file_is_an_invalid_argument() -> Result<(), Box<dyn std::error::Error>> {
+    if !ImageAnalyzer::is_supported() {
+        return Ok(());
+    }
+    let result = ImageAnalyzer::new()?.analyze_image_at_path(
+        "/nonexistent/visionkit-rs/missing.png",
+        ImageOrientation::Up,
+        &configuration(),
+    );
+    assert!(matches!(result, Err(VisionKitError::InvalidArgument(_))));
+    Ok(())
 }
 
 #[test]
