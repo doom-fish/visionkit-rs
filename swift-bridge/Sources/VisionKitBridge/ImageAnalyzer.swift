@@ -144,19 +144,97 @@ func vkLoadPixelBuffer(at path: String) throws -> CVPixelBuffer {
 }
 
 @available(macOS 13.0, *)
+enum VKAnalysisInput {
+    case url(URL)
+    case nsImagePath(String)
+    case cgImagePath(String)
+    case ciImagePath(String)
+    case pixelBufferPath(String)
+    case cgImage(CGImage)
+    case pixelBuffer(CVPixelBuffer)
+
+    func analyze(
+        with analyzer: ImageAnalyzer,
+        orientation: CGImagePropertyOrientation,
+        configuration: ImageAnalyzer.Configuration
+    ) async throws -> ImageAnalysis {
+        switch self {
+        case let .url(url):
+            return try await analyzer.analyze(
+                imageAt: url,
+                orientation: orientation,
+                configuration: configuration
+            )
+        case let .nsImagePath(path):
+            return try await analyzer.analyze(
+                try vkLoadNSImage(at: path),
+                orientation: orientation,
+                configuration: configuration
+            )
+        case let .cgImagePath(path):
+            return try await analyzer.analyze(
+                try vkLoadCGImage(at: path),
+                orientation: orientation,
+                configuration: configuration
+            )
+        case let .ciImagePath(path):
+            return try await analyzer.analyze(
+                try vkLoadCIImage(at: path),
+                orientation: orientation,
+                configuration: configuration
+            )
+        case let .pixelBufferPath(path):
+            return try await analyzer.analyze(
+                try vkLoadPixelBuffer(at: path),
+                orientation: orientation,
+                configuration: configuration
+            )
+        case let .cgImage(image):
+            return try await analyzer.analyze(
+                image,
+                orientation: orientation,
+                configuration: configuration
+            )
+        case let .pixelBuffer(pixelBuffer):
+            return try await analyzer.analyze(
+                pixelBuffer,
+                orientation: orientation,
+                configuration: configuration
+            )
+        }
+    }
+}
+
+func vkBorrowCGImage(_ pointer: UnsafeMutableRawPointer?) throws -> CGImage {
+    guard let pointer else {
+        throw VKBridgeError.invalidArgument("missing CGImage")
+    }
+    let object = Unmanaged<AnyObject>.fromOpaque(pointer).takeUnretainedValue()
+    guard CFGetTypeID(object) == CGImage.typeID else {
+        throw VKBridgeError.invalidArgument("pointer is not a CGImage")
+    }
+    return Unmanaged<CGImage>.fromOpaque(pointer).takeUnretainedValue()
+}
+
+func vkBorrowPixelBuffer(_ pointer: UnsafeMutableRawPointer?) throws -> CVPixelBuffer {
+    guard let pointer else {
+        throw VKBridgeError.invalidArgument("missing CVPixelBuffer")
+    }
+    let object = Unmanaged<AnyObject>.fromOpaque(pointer).takeUnretainedValue()
+    guard CFGetTypeID(object) == CVPixelBufferGetTypeID() else {
+        throw VKBridgeError.invalidArgument("pointer is not a CVPixelBuffer")
+    }
+    return Unmanaged<CVPixelBuffer>.fromOpaque(pointer).takeUnretainedValue()
+}
+
+@available(macOS 13.0, *)
 func vkPerformImageAnalysis(
     token: UnsafeMutableRawPointer?,
-    path: UnsafePointer<CChar>?,
     orientationRaw: UInt32,
     configurationJson: UnsafePointer<CChar>?,
     outAnalysisToken: UnsafeMutablePointer<UnsafeMutableRawPointer?>,
     outErrorMessage: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?,
-    work: @escaping (
-        VKImageAnalyzerBox,
-        String,
-        CGImagePropertyOrientation,
-        ImageAnalyzer.Configuration
-    ) async throws -> ImageAnalysis
+    input: () throws -> VKAnalysisInput
 ) -> Int32 {
     do {
         guard ImageAnalyzer.isSupported else {
@@ -165,14 +243,18 @@ func vkPerformImageAnalysis(
             )
         }
         let box = try vkImageAnalyzerBox(token)
-        let path = try vkRequireFilePath(path, field: "path")
+        let source = try input()
         let orientation = try vkImageOrientation(from: orientationRaw)
         let configuration = try vkAnalyzerConfiguration(from: configurationJson)
         let analysis = try vk_block_on_async(
             mainQueueGraceSeconds: 10,
             label: "image analysis"
         ) {
-            try await work(box, path, orientation, configuration)
+            try await source.analyze(
+                with: box.analyzer,
+                orientation: orientation,
+                configuration: configuration
+            )
         }
         outAnalysisToken.pointee = vkRetain(
             VKImageAnalysisBox(analysis: analysis)
@@ -251,17 +333,12 @@ public func vk_image_analyzer_analyze_image_at_path(
     }
     return vkPerformImageAnalysis(
         token: token,
-        path: path,
         orientationRaw: orientationRaw,
         configurationJson: configurationJson,
         outAnalysisToken: outAnalysisToken,
         outErrorMessage: outErrorMessage
-    ) { box, path, orientation, configuration in
-        try await box.analyzer.analyze(
-            imageAt: URL(fileURLWithPath: path),
-            orientation: orientation,
-            configuration: configuration
-        )
+    ) {
+        try VKAnalysisInput.url(URL(fileURLWithPath: vkRequireFilePath(path, field: "path")))
     }
 }
 
@@ -282,17 +359,12 @@ public func vk_image_analyzer_analyze_ns_image_at_path(
     }
     return vkPerformImageAnalysis(
         token: token,
-        path: path,
         orientationRaw: orientationRaw,
         configurationJson: configurationJson,
         outAnalysisToken: outAnalysisToken,
         outErrorMessage: outErrorMessage
-    ) { box, path, orientation, configuration in
-        try await box.analyzer.analyze(
-            try vkLoadNSImage(at: path),
-            orientation: orientation,
-            configuration: configuration
-        )
+    ) {
+        try VKAnalysisInput.nsImagePath(vkRequireFilePath(path, field: "path"))
     }
 }
 
@@ -313,17 +385,12 @@ public func vk_image_analyzer_analyze_cg_image_at_path(
     }
     return vkPerformImageAnalysis(
         token: token,
-        path: path,
         orientationRaw: orientationRaw,
         configurationJson: configurationJson,
         outAnalysisToken: outAnalysisToken,
         outErrorMessage: outErrorMessage
-    ) { box, path, orientation, configuration in
-        try await box.analyzer.analyze(
-            try vkLoadCGImage(at: path),
-            orientation: orientation,
-            configuration: configuration
-        )
+    ) {
+        try VKAnalysisInput.cgImagePath(vkRequireFilePath(path, field: "path"))
     }
 }
 
@@ -344,17 +411,12 @@ public func vk_image_analyzer_analyze_ci_image_at_path(
     }
     return vkPerformImageAnalysis(
         token: token,
-        path: path,
         orientationRaw: orientationRaw,
         configurationJson: configurationJson,
         outAnalysisToken: outAnalysisToken,
         outErrorMessage: outErrorMessage
-    ) { box, path, orientation, configuration in
-        try await box.analyzer.analyze(
-            try vkLoadCIImage(at: path),
-            orientation: orientation,
-            configuration: configuration
-        )
+    ) {
+        try VKAnalysisInput.ciImagePath(vkRequireFilePath(path, field: "path"))
     }
 }
 
@@ -375,16 +437,63 @@ public func vk_image_analyzer_analyze_pixel_buffer_at_path(
     }
     return vkPerformImageAnalysis(
         token: token,
-        path: path,
         orientationRaw: orientationRaw,
         configurationJson: configurationJson,
         outAnalysisToken: outAnalysisToken,
         outErrorMessage: outErrorMessage
-    ) { box, path, orientation, configuration in
-        try await box.analyzer.analyze(
-            try vkLoadPixelBuffer(at: path),
-            orientation: orientation,
-            configuration: configuration
+    ) {
+        try VKAnalysisInput.pixelBufferPath(vkRequireFilePath(path, field: "path"))
+    }
+}
+
+@_cdecl("vk_image_analyzer_analyze_cg_image")
+public func vk_image_analyzer_analyze_cg_image(
+    _ token: UnsafeMutableRawPointer?,
+    _ image: UnsafeMutableRawPointer?,
+    _ orientationRaw: UInt32,
+    _ configurationJson: UnsafePointer<CChar>?,
+    _ outAnalysisToken: UnsafeMutablePointer<UnsafeMutableRawPointer?>,
+    _ outErrorMessage: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?
+) -> Int32 {
+    guard #available(macOS 13.0, *) else {
+        outErrorMessage?.pointee = vkCString(
+            "ImageAnalyzer requires macOS 13+"
         )
+        return VK_UNAVAILABLE_ON_THIS_MACOS
+    }
+    return vkPerformImageAnalysis(
+        token: token,
+        orientationRaw: orientationRaw,
+        configurationJson: configurationJson,
+        outAnalysisToken: outAnalysisToken,
+        outErrorMessage: outErrorMessage
+    ) {
+        try VKAnalysisInput.cgImage(vkBorrowCGImage(image))
+    }
+}
+
+@_cdecl("vk_image_analyzer_analyze_pixel_buffer")
+public func vk_image_analyzer_analyze_pixel_buffer(
+    _ token: UnsafeMutableRawPointer?,
+    _ pixelBuffer: UnsafeMutableRawPointer?,
+    _ orientationRaw: UInt32,
+    _ configurationJson: UnsafePointer<CChar>?,
+    _ outAnalysisToken: UnsafeMutablePointer<UnsafeMutableRawPointer?>,
+    _ outErrorMessage: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?
+) -> Int32 {
+    guard #available(macOS 13.0, *) else {
+        outErrorMessage?.pointee = vkCString(
+            "ImageAnalyzer requires macOS 13+"
+        )
+        return VK_UNAVAILABLE_ON_THIS_MACOS
+    }
+    return vkPerformImageAnalysis(
+        token: token,
+        orientationRaw: orientationRaw,
+        configurationJson: configurationJson,
+        outAnalysisToken: outAnalysisToken,
+        outErrorMessage: outErrorMessage
+    ) {
+        try VKAnalysisInput.pixelBuffer(vkBorrowPixelBuffer(pixelBuffer))
     }
 }

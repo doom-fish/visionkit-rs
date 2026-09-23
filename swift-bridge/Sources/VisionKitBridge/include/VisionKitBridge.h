@@ -53,6 +53,22 @@ int32_t vk_image_analyzer_analyze_pixel_buffer_at_path(
     void **out_analysis_token,
     char **out_error_message
 );
+int32_t vk_image_analyzer_analyze_cg_image(
+    void *token,
+    void *image,
+    uint32_t orientation_raw,
+    const char *configuration_json,
+    void **out_analysis_token,
+    char **out_error_message
+);
+int32_t vk_image_analyzer_analyze_pixel_buffer(
+    void *token,
+    void *pixel_buffer,
+    uint32_t orientation_raw,
+    const char *configuration_json,
+    void **out_analysis_token,
+    char **out_error_message
+);
 
 void vk_image_analysis_release(void *token);
 int32_t vk_image_analysis_transcript(
@@ -424,6 +440,24 @@ typedef void (*vk_async_cb)(const void *result, int32_t status, const char *erro
 void vk_image_analyzer_analyze_image_async(
     void *token,
     const char *path,
+    uint32_t orientation_raw,
+    const char *configuration_json,
+    vk_async_cb cb,
+    void *ctx
+);
+
+void vk_image_analyzer_analyze_cg_image_async(
+    void *token,
+    void *image,
+    uint32_t orientation_raw,
+    const char *configuration_json,
+    vk_async_cb cb,
+    void *ctx
+);
+
+void vk_image_analyzer_analyze_pixel_buffer_async(
+    void *token,
+    void *pixel_buffer,
     uint32_t orientation_raw,
     const char *configuration_json,
     vk_async_cb cb,

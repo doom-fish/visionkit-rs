@@ -40,6 +40,50 @@ func vkAsyncFail(
 // ImageAnalyzer.analyze(_:configuration:) async throws → ImageAnalysis
 // ============================================================================
 
+@available(macOS 13.0, *)
+func vkAnalyzeAsync(
+    token: UnsafeMutableRawPointer?,
+    orientationRaw: UInt32,
+    configurationJson: UnsafePointer<CChar>?,
+    cb: VKAsyncCallback,
+    ctx: UnsafeMutableRawPointer,
+    input: () throws -> VKAnalysisInput
+) {
+    // Copy C strings synchronously — Rust may free them as soon as we return.
+    // Validate eagerly and synchronously so that error futures resolve without
+    // waiting for the analysis Task.
+    let box: VKImageAnalyzerBox
+    let source: VKAnalysisInput
+    let orientation: CGImagePropertyOrientation
+    let configuration: ImageAnalyzer.Configuration
+    do {
+        guard ImageAnalyzer.isSupported else {
+            throw VKBridgeError.analyzerNotSupported("ImageAnalyzer is not supported on this Mac")
+        }
+        box = try vkImageAnalyzerBox(token)
+        source = try input()
+        orientation = try vkImageOrientation(from: orientationRaw)
+        configuration = try vkAnalyzerConfiguration(from: configurationJson)
+    } catch {
+        vkAsyncFail(error, cb, ctx)
+        return
+    }
+
+    let capturedCtx = ctx
+    Task {
+        do {
+            let analysis = try await source.analyze(
+                with: box.analyzer,
+                orientation: orientation,
+                configuration: configuration
+            )
+            cb(vkRetain(VKImageAnalysisBox(analysis: analysis)), VK_OK, nil, capturedCtx)
+        } catch {
+            vkAsyncFail(error, cb, capturedCtx)
+        }
+    }
+}
+
 /// Async thunk for `ImageAnalyzer.analyze(imageAt:orientation:configuration:)`.
 ///
 /// Fires `cb(retained VKImageAnalysisBox ptr, VK_OK, nil, ctx)` on success,
@@ -61,61 +105,70 @@ public func vk_image_analyzer_analyze_image_async(
         )
         return
     }
-    // Copy C strings synchronously — Rust may free them as soon as we return.
-    let pathStr: String? = path.map { String(cString: $0) }
-    let cfgStr: String? = configurationJson.map { String(cString: $0) }
+    vkAnalyzeAsync(
+        token: token,
+        orientationRaw: orientationRaw,
+        configurationJson: configurationJson,
+        cb: cb,
+        ctx: ctx
+    ) {
+        try VKAnalysisInput.url(URL(fileURLWithPath: vkRequireFilePath(path, field: "path")))
+    }
+}
 
-    // Validate eagerly and synchronously so that error futures resolve without
-    // waiting for the analysis Task.
-    guard ImageAnalyzer.isSupported else {
+@_cdecl("vk_image_analyzer_analyze_cg_image_async")
+public func vk_image_analyzer_analyze_cg_image_async(
+    _ token: UnsafeMutableRawPointer?,
+    _ image: UnsafeMutableRawPointer?,
+    _ orientationRaw: UInt32,
+    _ configurationJson: UnsafePointer<CChar>?,
+    _ cb: VKAsyncCallback,
+    _ ctx: UnsafeMutableRawPointer
+) {
+    guard #available(macOS 13.0, *) else {
         vkAsyncFail(
-            VKBridgeError.analyzerNotSupported("ImageAnalyzer is not supported on this Mac"),
+            VKBridgeError.unavailableOnThisMacOS("ImageAnalyzer requires macOS 13+"),
             cb,
             ctx
         )
         return
     }
-    guard let rawPath = pathStr else {
-        vkAsyncFail(VKBridgeError.invalidArgument("missing path"), cb, ctx)
-        return
+    vkAnalyzeAsync(
+        token: token,
+        orientationRaw: orientationRaw,
+        configurationJson: configurationJson,
+        cb: cb,
+        ctx: ctx
+    ) {
+        try VKAnalysisInput.cgImage(vkBorrowCGImage(image))
     }
-    guard FileManager.default.fileExists(atPath: rawPath) else {
+}
+
+@_cdecl("vk_image_analyzer_analyze_pixel_buffer_async")
+public func vk_image_analyzer_analyze_pixel_buffer_async(
+    _ token: UnsafeMutableRawPointer?,
+    _ pixelBuffer: UnsafeMutableRawPointer?,
+    _ orientationRaw: UInt32,
+    _ configurationJson: UnsafePointer<CChar>?,
+    _ cb: VKAsyncCallback,
+    _ ctx: UnsafeMutableRawPointer
+) {
+    guard #available(macOS 13.0, *) else {
         vkAsyncFail(
-            VKBridgeError.invalidArgument("file does not exist at path: \(rawPath)"),
+            VKBridgeError.unavailableOnThisMacOS("ImageAnalyzer requires macOS 13+"),
             cb,
             ctx
         )
         return
     }
-    guard let cfgString = cfgStr else {
-        vkAsyncFail(VKBridgeError.invalidArgument("missing configuration JSON"), cb, ctx)
-        return
-    }
-
-    let box: VKImageAnalyzerBox
-    let orientation: CGImagePropertyOrientation
-    let configuration: ImageAnalyzer.Configuration
-    do {
-        box = try vkImageAnalyzerBox(token)
-        orientation = try vkImageOrientation(from: orientationRaw)
-        configuration = try cfgString.withCString { try vkAnalyzerConfiguration(from: $0) }
-    } catch {
-        vkAsyncFail(error, cb, ctx)
-        return
-    }
-
-    let capturedCtx = ctx
-    Task {
-        do {
-            let analysis = try await box.analyzer.analyze(
-                imageAt: URL(fileURLWithPath: rawPath),
-                orientation: orientation,
-                configuration: configuration
-            )
-            cb(vkRetain(VKImageAnalysisBox(analysis: analysis)), VK_OK, nil, capturedCtx)
-        } catch {
-            vkAsyncFail(error, cb, capturedCtx)
-        }
+    vkAnalyzeAsync(
+        token: token,
+        orientationRaw: orientationRaw,
+        configurationJson: configurationJson,
+        cb: cb,
+        ctx: ctx
+    ) {
+        try VKAnalysisInput.pixelBuffer(vkBorrowPixelBuffer(pixelBuffer))
     }
 }
 

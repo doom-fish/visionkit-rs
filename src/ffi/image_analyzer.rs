@@ -50,6 +50,22 @@ extern "C" {
         out_analysis_token: *mut *mut c_void,
         out_error_message: *mut *mut c_char,
     ) -> i32;
+    pub fn vk_image_analyzer_analyze_cg_image(
+        token: *mut c_void,
+        image: *mut c_void,
+        orientation_raw: u32,
+        configuration_json: *const c_char,
+        out_analysis_token: *mut *mut c_void,
+        out_error_message: *mut *mut c_char,
+    ) -> i32;
+    pub fn vk_image_analyzer_analyze_pixel_buffer(
+        token: *mut c_void,
+        pixel_buffer: *mut c_void,
+        orientation_raw: u32,
+        configuration_json: *const c_char,
+        out_analysis_token: *mut *mut c_void,
+        out_error_message: *mut *mut c_char,
+    ) -> i32;
 }
 
 /// Async C callback type: `(result: *const c_void, status: i32, error: *const c_char, ctx: *mut c_void) -> ()`
@@ -67,6 +83,24 @@ extern "C" {
     pub fn vk_image_analyzer_analyze_image_async(
         token: *mut c_void,
         path: *const c_char,
+        orientation_raw: u32,
+        configuration_json: *const c_char,
+        cb: VkAsyncCb,
+        ctx: *mut c_void,
+    );
+
+    pub fn vk_image_analyzer_analyze_cg_image_async(
+        token: *mut c_void,
+        image: *mut c_void,
+        orientation_raw: u32,
+        configuration_json: *const c_char,
+        cb: VkAsyncCb,
+        ctx: *mut c_void,
+    );
+
+    pub fn vk_image_analyzer_analyze_pixel_buffer_async(
+        token: *mut c_void,
+        pixel_buffer: *mut c_void,
         orientation_raw: u32,
         configuration_json: *const c_char,
         cb: VkAsyncCb,

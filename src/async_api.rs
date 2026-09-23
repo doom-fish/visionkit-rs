@@ -262,6 +262,50 @@ impl AsyncImageAnalyzer {
         }
         Ok(AnalyzeImageFuture { inner: future })
     }
+
+    #[cfg(feature = "apple-cf")]
+    pub fn analyze_cg_image(
+        &self,
+        image: &apple_cf::cg::CGImage,
+        orientation: ImageOrientation,
+        configuration: &ImageAnalyzerConfiguration,
+    ) -> Result<AnalyzeImageFuture, VisionKitError> {
+        let cfg_cs = json_cstring(configuration)?;
+        let (future, ctx) = AsyncCompletion::create();
+        unsafe {
+            ffi::image_analyzer::vk_image_analyzer_analyze_cg_image_async(
+                self.token,
+                image.as_ptr(),
+                orientation.raw_value(),
+                cfg_cs.as_ptr(),
+                analyze_cb,
+                ctx,
+            );
+        }
+        Ok(AnalyzeImageFuture { inner: future })
+    }
+
+    #[cfg(feature = "apple-cf")]
+    pub fn analyze_pixel_buffer(
+        &self,
+        pixel_buffer: &apple_cf::cv::CVPixelBuffer,
+        orientation: ImageOrientation,
+        configuration: &ImageAnalyzerConfiguration,
+    ) -> Result<AnalyzeImageFuture, VisionKitError> {
+        let cfg_cs = json_cstring(configuration)?;
+        let (future, ctx) = AsyncCompletion::create();
+        unsafe {
+            ffi::image_analyzer::vk_image_analyzer_analyze_pixel_buffer_async(
+                self.token,
+                pixel_buffer.as_ptr(),
+                orientation.raw_value(),
+                cfg_cs.as_ptr(),
+                analyze_cb,
+                ctx,
+            );
+        }
+        Ok(AnalyzeImageFuture { inner: future })
+    }
 }
 
 // ============================================================================

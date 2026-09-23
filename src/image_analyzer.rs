@@ -289,6 +289,54 @@ impl ImageAnalyzer {
         )
     }
 
+    #[cfg(feature = "apple-cf")]
+    pub fn analyze_cg_image(
+        &self,
+        image: &apple_cf::cg::CGImage,
+        orientation: ImageOrientation,
+        configuration: &ImageAnalyzerConfiguration,
+    ) -> Result<ImageAnalysis, VisionKitError> {
+        self.analyze_input(
+            orientation,
+            configuration,
+            "in-memory CGImage image analysis",
+            |token, orientation_raw, configuration_json, out_token, out_error| unsafe {
+                ffi::image_analyzer::vk_image_analyzer_analyze_cg_image(
+                    token,
+                    image.as_ptr(),
+                    orientation_raw,
+                    configuration_json,
+                    out_token,
+                    out_error,
+                )
+            },
+        )
+    }
+
+    #[cfg(feature = "apple-cf")]
+    pub fn analyze_pixel_buffer(
+        &self,
+        pixel_buffer: &apple_cf::cv::CVPixelBuffer,
+        orientation: ImageOrientation,
+        configuration: &ImageAnalyzerConfiguration,
+    ) -> Result<ImageAnalysis, VisionKitError> {
+        self.analyze_input(
+            orientation,
+            configuration,
+            "in-memory CVPixelBuffer image analysis",
+            |token, orientation_raw, configuration_json, out_token, out_error| unsafe {
+                ffi::image_analyzer::vk_image_analyzer_analyze_pixel_buffer(
+                    token,
+                    pixel_buffer.as_ptr(),
+                    orientation_raw,
+                    configuration_json,
+                    out_token,
+                    out_error,
+                )
+            },
+        )
+    }
+
     fn analyze_with_loader<P: AsRef<Path>>(
         &self,
         path: P,
@@ -298,19 +346,40 @@ impl ImageAnalyzer {
         context: &str,
     ) -> Result<ImageAnalysis, VisionKitError> {
         let path = path_to_cstring(path.as_ref())?;
+        self.analyze_input(
+            orientation,
+            configuration,
+            context,
+            |token, orientation_raw, configuration_json, out_token, out_error| unsafe {
+                analyze_fn(
+                    token,
+                    path.as_ptr(),
+                    orientation_raw,
+                    configuration_json,
+                    out_token,
+                    out_error,
+                )
+            },
+        )
+    }
+
+    fn analyze_input(
+        &self,
+        orientation: ImageOrientation,
+        configuration: &ImageAnalyzerConfiguration,
+        context: &str,
+        analyze: impl FnOnce(*mut c_void, u32, *const c_char, *mut *mut c_void, *mut *mut c_char) -> i32,
+    ) -> Result<ImageAnalysis, VisionKitError> {
         let configuration_json = json_cstring(configuration)?;
         let mut analysis_token: *mut c_void = ptr::null_mut();
         let mut err_msg: *mut c_char = ptr::null_mut();
-        let status = unsafe {
-            analyze_fn(
-                self.token,
-                path.as_ptr(),
-                orientation.raw_value(),
-                configuration_json.as_ptr(),
-                &mut analysis_token,
-                &mut err_msg,
-            )
-        };
+        let status = analyze(
+            self.token,
+            orientation.raw_value(),
+            configuration_json.as_ptr(),
+            &mut analysis_token,
+            &mut err_msg,
+        );
         if status == ffi::status::OK {
             if analysis_token.is_null() {
                 return Err(VisionKitError::Unknown(format!(

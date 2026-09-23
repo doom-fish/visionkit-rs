@@ -40,8 +40,10 @@ crate-type = ["lib"]
 [features]
 default = []
 async = ["dep:doom-fish-utils"]
+apple-cf = ["dep:apple-cf"]
 
 [dependencies]
+apple-cf = { path = "../apple-cf-rs", version = ">=0.11, <0.12", default-features = false, features = ["cg", "cv"], optional = true }
 doom-fish-utils = { path = "../doom-fish-utils", version = ">=0.4.1, <0.5", optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
