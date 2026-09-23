@@ -195,8 +195,8 @@ impl ImageAnalyzer {
         let mut err_msg: *mut c_char = ptr::null_mut();
         let status = unsafe {
             ffi::image_analyzer::vk_image_analyzer_supported_text_recognition_languages_json(
-                &mut languages_json,
-                &mut err_msg,
+                &raw mut languages_json,
+                &raw mut err_msg,
             )
         };
         if status == ffi::status::OK {
@@ -377,8 +377,8 @@ impl ImageAnalyzer {
             self.token,
             orientation.raw_value(),
             configuration_json.as_ptr(),
-            &mut analysis_token,
-            &mut err_msg,
+            &raw mut analysis_token,
+            &raw mut err_msg,
         );
         if status == ffi::status::OK {
             if analysis_token.is_null() {

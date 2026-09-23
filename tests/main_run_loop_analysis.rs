@@ -113,8 +113,8 @@ fn in_memory_analysis_on_main() {
             pixel_buffer.as_ptr(),
             ImageOrientation::Up.raw_value(),
             configuration_json.as_ptr(),
-            &mut analysis_token,
-            &mut error_message,
+            &raw mut analysis_token,
+            &raw mut error_message,
         )
     };
     assert_eq!(status, ffi::status::INVALID_ARGUMENT);

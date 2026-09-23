@@ -476,7 +476,7 @@ impl LiveTextContentView {
                 frame.y,
                 frame.width,
                 frame.height,
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -546,7 +546,7 @@ impl LiveTextTrackingImageView {
                 frame.y,
                 frame.width,
                 frame.height,
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -560,7 +560,7 @@ impl LiveTextTrackingImageView {
             ffi::live_text_interaction::vk_live_text_tracking_image_view_set_image_at_path(
                 self.token,
                 path.as_ptr(),
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -575,10 +575,10 @@ impl LiveTextTrackingImageView {
         let status = unsafe {
             ffi::live_text_interaction::vk_live_text_tracking_image_view_image_size(
                 self.token,
-                &mut has_image,
-                &mut width,
-                &mut height,
-                &mut err_msg,
+                &raw mut has_image,
+                &raw mut width,
+                &raw mut height,
+                &raw mut err_msg,
             )
         };
         if status == ffi::status::OK {
@@ -671,7 +671,7 @@ impl LiveTextInteractionDelegate {
             ffi::live_text_interaction::vk_live_text_interaction_delegate_set_content_view(
                 self.token,
                 value.map_or(ptr::null_mut(), LiveTextContentView::raw_token),
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -733,7 +733,7 @@ impl LiveTextInteractionDelegate {
         let status = unsafe {
             ffi::live_text_interaction::vk_live_text_interaction_delegate_clear_recorded_events(
                 self.token,
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -770,7 +770,7 @@ impl LiveTextInteractionDelegate {
             ffi::live_text_interaction::vk_live_text_interaction_delegate_set_config_json(
                 self.token,
                 config_json.as_ptr(),
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -889,7 +889,7 @@ impl LiveTextInteraction {
             ffi::live_text_interaction::vk_live_text_interaction_set_analysis(
                 self.token,
                 analysis.raw_token(),
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -903,7 +903,7 @@ impl LiveTextInteraction {
             ffi::live_text_interaction::vk_live_text_interaction_track_image_at_path(
                 self.token,
                 path.as_ptr(),
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -925,7 +925,7 @@ impl LiveTextInteraction {
             ffi::live_text_interaction::vk_live_text_interaction_set_delegate(
                 self.token,
                 delegate.map_or(ptr::null_mut(), LiveTextInteractionDelegate::raw_token),
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -948,7 +948,7 @@ impl LiveTextInteraction {
             ffi::live_text_interaction::vk_live_text_interaction_set_preferred_interaction_types(
                 self.token,
                 interaction_types.bits(),
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -994,7 +994,7 @@ impl LiveTextInteraction {
             ffi::live_text_interaction::vk_live_text_interaction_set_tracking_image_view(
                 self.token,
                 view.map_or(ptr::null_mut(), LiveTextTrackingImageView::raw_token),
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -1013,7 +1013,7 @@ impl LiveTextInteraction {
         let status = unsafe {
             ffi::live_text_interaction::vk_live_text_interaction_reset_selection(
                 self.token,
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -1064,7 +1064,7 @@ impl LiveTextInteraction {
         let status = unsafe {
             ffi::live_text_interaction::vk_live_text_interaction_set_contents_rect_needs_update(
                 self.token,
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -1145,7 +1145,7 @@ impl LiveTextInteraction {
                 self.token,
                 i32::from(hidden),
                 i32::from(animated),
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -1177,7 +1177,7 @@ impl LiveTextInteraction {
                 insets.left,
                 insets.bottom,
                 insets.right,
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -1202,7 +1202,7 @@ impl LiveTextInteraction {
             ffi::live_text_interaction::vk_live_text_interaction_set_supplementary_interface_font_json(
                 self.token,
                 font_json.as_ptr(),
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -1214,7 +1214,7 @@ impl LiveTextInteraction {
         let status = unsafe {
             ffi::live_text_interaction::vk_live_text_interaction_begin_subject_analysis_if_necessary(
                 self.token,
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -1243,7 +1243,7 @@ impl LiveTextInteraction {
             ffi::live_text_interaction::vk_live_text_interaction_set_highlighted_subjects_json(
                 self.token,
                 subjects_json.as_ptr(),
-                &mut err_msg,
+                &raw mut err_msg,
             )
         };
         status_to_unit(status, err_msg)
@@ -1262,8 +1262,8 @@ impl LiveTextInteraction {
                 self.token,
                 x,
                 y,
-                &mut subject_json,
-                &mut err_msg,
+                &raw mut subject_json,
+                &raw mut err_msg,
             )
         };
         if status == ffi::status::OK {
@@ -1290,11 +1290,11 @@ impl LiveTextInteraction {
             ffi::live_text_interaction::vk_live_text_interaction_image_for_subjects_png_data(
                 self.token,
                 subjects_json.as_ptr(),
-                &mut bytes,
-                &mut len,
-                &mut width,
-                &mut height,
-                &mut err_msg,
+                &raw mut bytes,
+                &raw mut len,
+                &raw mut width,
+                &raw mut height,
+                &raw mut err_msg,
             )
         };
         if status == ffi::status::OK {
@@ -1316,7 +1316,7 @@ impl LiveTextInteraction {
     fn query_bool(&self, query: BoolQueryFn) -> Result<bool, VisionKitError> {
         let mut value = 0;
         let mut err_msg: *mut c_char = ptr::null_mut();
-        let status = unsafe { query(self.token, &mut value, &mut err_msg) };
+        let status = unsafe { query(self.token, &raw mut value, &raw mut err_msg) };
         if status == ffi::status::OK {
             Ok(value != 0)
         } else {
@@ -1326,14 +1326,14 @@ impl LiveTextInteraction {
 
     fn set_bool(&self, value: bool, setter: BoolSetterFn) -> Result<(), VisionKitError> {
         let mut err_msg: *mut c_char = ptr::null_mut();
-        let status = unsafe { setter(self.token, i32::from(value), &mut err_msg) };
+        let status = unsafe { setter(self.token, i32::from(value), &raw mut err_msg) };
         status_to_unit(status, err_msg)
     }
 
     fn query_types(&self, query: TypesQueryFn) -> Result<LiveTextInteractionTypes, VisionKitError> {
         let mut raw = 0;
         let mut err_msg: *mut c_char = ptr::null_mut();
-        let status = unsafe { query(self.token, &mut raw, &mut err_msg) };
+        let status = unsafe { query(self.token, &raw mut raw, &raw mut err_msg) };
         if status == ffi::status::OK {
             Ok(LiveTextInteractionTypes::new(raw))
         } else {
@@ -1347,7 +1347,7 @@ impl LiveTextInteraction {
     ) -> Result<String, VisionKitError> {
         let mut value: *mut c_char = ptr::null_mut();
         let mut err_msg: *mut c_char = ptr::null_mut();
-        let status = unsafe { query(self.token, &mut value, &mut err_msg) };
+        let status = unsafe { query(self.token, &raw mut value, &raw mut err_msg) };
         if status == ffi::status::OK {
             unsafe { string_from_ptr(value, "live text interaction string") }
         } else {
@@ -1361,7 +1361,7 @@ impl LiveTextInteraction {
     {
         let mut value: *mut c_char = ptr::null_mut();
         let mut err_msg: *mut c_char = ptr::null_mut();
-        let status = unsafe { query(self.token, &mut value, &mut err_msg) };
+        let status = unsafe { query(self.token, &raw mut value, &raw mut err_msg) };
         if status == ffi::status::OK {
             unsafe { parse_json_ptr(value, context) }
         } else {
@@ -1375,7 +1375,7 @@ impl LiveTextInteraction {
     {
         let json = json_cstring(value)?;
         let mut err_msg: *mut c_char = ptr::null_mut();
-        let status = unsafe { setter(self.token, json.as_ptr(), &mut err_msg) };
+        let status = unsafe { setter(self.token, json.as_ptr(), &raw mut err_msg) };
         status_to_unit(status, err_msg)
     }
 
@@ -1403,7 +1403,7 @@ impl LiveTextInteraction {
     ) -> Result<bool, VisionKitError> {
         let mut value = 0;
         let mut err_msg: *mut c_char = ptr::null_mut();
-        let status = unsafe { query(self.token, x, y, &mut value, &mut err_msg) };
+        let status = unsafe { query(self.token, x, y, &raw mut value, &raw mut err_msg) };
         if status == ffi::status::OK {
             Ok(value != 0)
         } else {
@@ -1437,7 +1437,7 @@ where
 {
     let mut json: *mut c_char = ptr::null_mut();
     let mut err_msg: *mut c_char = ptr::null_mut();
-    let status = call(&mut json, &mut err_msg);
+    let status = call(&raw mut json, &raw mut err_msg);
     if status == ffi::status::OK {
         unsafe { parse_json_ptr(json, context) }
     } else {
@@ -1451,7 +1451,7 @@ where
 {
     let mut token: *mut c_void = ptr::null_mut();
     let mut err_msg: *mut c_char = ptr::null_mut();
-    let status = call(&mut token, &mut err_msg);
+    let status = call(&raw mut token, &raw mut err_msg);
     if status == ffi::status::OK {
         Ok((!token.is_null()).then_some(token))
     } else {
@@ -1468,7 +1468,7 @@ where
     let mut width = 0.0;
     let mut height = 0.0;
     let mut err_msg: *mut c_char = ptr::null_mut();
-    let status = call(&mut x, &mut y, &mut width, &mut height, &mut err_msg);
+    let status = call(&raw mut x, &raw mut y, &raw mut width, &raw mut height, &raw mut err_msg);
     if status == ffi::status::OK {
         Ok(Rect {
             x,
@@ -1491,7 +1491,7 @@ where
     let mut width = 0.0;
     let mut height = 0.0;
     let mut err_msg: *mut c_char = ptr::null_mut();
-    let status = call(&mut bytes, &mut len, &mut width, &mut height, &mut err_msg);
+    let status = call(&raw mut bytes, &raw mut len, &raw mut width, &raw mut height, &raw mut err_msg);
     if status == ffi::status::OK {
         Ok(LiveTextImageData {
             size: Size { width, height },

@@ -16,8 +16,8 @@ impl VNDocumentCameraViewController {
         let mut err_msg: *mut c_char = ptr::null_mut();
         let status = unsafe {
             ffi::vn_document_camera_view_controller::vk_vn_document_camera_view_controller_support_json(
-                &mut support_json,
-                &mut err_msg,
+                &raw mut support_json,
+                &raw mut err_msg,
             )
         };
         if status == ffi::status::OK {

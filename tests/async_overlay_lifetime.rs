@@ -59,7 +59,7 @@ fn main() {
     let subject_at = block_on(with_deadline(subject_at, Duration::from_millis(300)));
     let subjects = block_on(with_deadline(subjects, Duration::from_millis(300)));
 
-    assert!(subject_at.map_or(true, |result| result.is_ok()));
-    assert!(subjects.map_or(true, |result| result.is_ok()));
+    assert!(subject_at.is_none_or(|result| result.is_ok()));
+    assert!(subjects.is_none_or(|result| result.is_ok()));
     println!("pending overlay queries survived dropping the interaction");
 }

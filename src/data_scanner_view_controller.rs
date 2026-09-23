@@ -16,8 +16,8 @@ impl DataScannerViewController {
         let mut err_msg: *mut c_char = ptr::null_mut();
         let status = unsafe {
             ffi::data_scanner_view_controller::vk_data_scanner_view_controller_support_json(
-                &mut support_json,
-                &mut err_msg,
+                &raw mut support_json,
+                &raw mut err_msg,
             )
         };
         if status == ffi::status::OK {

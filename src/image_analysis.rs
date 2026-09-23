@@ -36,8 +36,8 @@ impl ImageAnalysis {
         let status = unsafe {
             ffi::image_analysis::vk_image_analysis_transcript(
                 self.token,
-                &mut transcript,
-                &mut err_msg,
+                &raw mut transcript,
+                &raw mut err_msg,
             )
         };
         if status == ffi::status::OK {
@@ -55,8 +55,8 @@ impl ImageAnalysis {
             ffi::image_analysis::vk_image_analysis_has_results(
                 self.token,
                 analysis_types.bits(),
-                &mut has_results,
-                &mut err_msg,
+                &raw mut has_results,
+                &raw mut err_msg,
             )
         };
         if status == ffi::status::OK {

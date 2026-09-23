@@ -1,1 +1,3 @@
 /target
+swift-bridge/.build/
+swift-bridge/.swiftpm/
