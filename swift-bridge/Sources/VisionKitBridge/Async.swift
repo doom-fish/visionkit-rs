@@ -132,11 +132,20 @@ public func vk_live_text_overlay_subjects_async(
         "LiveTextInteraction requires macOS 13+".withCString { cb(nil, $0, ctx) }
         return
     }
+    let box: VKLiveTextInteractionBox
+    do {
+        box = try vkLiveTextInteractionBox(token)
+    } catch let error as VKBridgeError {
+        error.description.withCString { cb(nil, $0, ctx) }
+        return
+    } catch {
+        error.localizedDescription.withCString { cb(nil, $0, ctx) }
+        return
+    }
     let capturedCtx = ctx
     Task { @MainActor in
         do {
-            let box = try vkLiveTextInteractionBox(token)
-            let subjects = try await box.overlayView.subjects
+            let subjects = await box.overlayView.subjects
             var payloads: [VKSubjectBoundsPayload] = []
             for subject in subjects {
                 let bounds = subject.bounds
@@ -183,10 +192,19 @@ public func vk_live_text_overlay_subject_at_async(
         "LiveTextInteraction requires macOS 13+".withCString { cb(nil, $0, ctx) }
         return
     }
+    let box: VKLiveTextInteractionBox
+    do {
+        box = try vkLiveTextInteractionBox(token)
+    } catch let error as VKBridgeError {
+        error.description.withCString { cb(nil, $0, ctx) }
+        return
+    } catch {
+        error.localizedDescription.withCString { cb(nil, $0, ctx) }
+        return
+    }
     let capturedCtx = ctx
     Task { @MainActor in
         do {
-            let box = try vkLiveTextInteractionBox(token)
             let point = CGPoint(x: pointX, y: pointY)
             if let subject = await box.overlayView.subject(at: point) {
                 let bounds = subject.bounds

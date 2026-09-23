@@ -330,30 +330,18 @@ impl Future for SubjectAtFuture {
 /// Bounds are in the same coordinate space that VisionKit uses when populating
 /// the overlay view.  That is, they are relative to the view's bounds as
 /// configured via `setPreferredInteractionTypes` and `setAnalysis(_:)`.
-pub struct AsyncOverlaySubjects {
-    // Raw token of the underlying VKLiveTextInteractionBox.
-    // Caller must ensure the LiveTextInteraction outlives the returned futures.
-    token: *mut c_void,
+pub struct AsyncOverlaySubjects<'a> {
+    interaction: &'a LiveTextInteraction,
 }
 
-// SAFETY: the underlying VKLiveTextInteractionBox is ARC-counted and the callback
-// fires exactly once. The callback carries a reference to the token across threads,
-// and since the token is ARC-counted by Swift, it remains valid regardless of which
-// thread completes the async operation. Sync is NOT implemented because the
-// underlying ImageAnalysisOverlayView is a UI component that must be accessed from
-// the main thread.
-unsafe impl Send for AsyncOverlaySubjects {}
-
-impl AsyncOverlaySubjects {
+impl<'a> AsyncOverlaySubjects<'a> {
     /// Wrap a [`LiveTextInteraction`] for async subject queries.
     ///
-    /// The `interaction` must remain alive for as long as the returned
-    /// futures are pending.
+    /// Each query takes its own reference to the overlay view before it
+    /// returns, so pending futures stay valid if the `interaction` is dropped.
     #[must_use]
-    pub fn new(interaction: &LiveTextInteraction) -> Self {
-        Self {
-            token: interaction.raw_token(),
-        }
+    pub const fn new(interaction: &'a LiveTextInteraction) -> Self {
+        Self { interaction }
     }
 
     /// Asynchronously retrieve all subjects as their bounds rectangles.
@@ -369,7 +357,7 @@ impl AsyncOverlaySubjects {
         let (future, ctx) = AsyncCompletion::create();
         unsafe {
             ffi::live_text_interaction::vk_live_text_overlay_subjects_async(
-                self.token,
+                self.interaction.raw_token(),
                 subjects_cb,
                 ctx,
             );
@@ -385,7 +373,7 @@ impl AsyncOverlaySubjects {
         let (future, ctx) = AsyncCompletion::create();
         unsafe {
             ffi::live_text_interaction::vk_live_text_overlay_subject_at_async(
-                self.token,
+                self.interaction.raw_token(),
                 x,
                 y,
                 subject_at_cb,
