@@ -46,15 +46,16 @@
 //! # });
 //! ```
 
-use std::ffi::{c_int, c_void, CStr};
+use std::ffi::{c_char, c_int, c_void, CStr};
 use std::future::Future;
+use std::mem::ManuallyDrop;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::task::{Context, Poll, Wake, Waker};
 use std::thread::{self, Thread};
 
-use doom_fish_utils::completion::{error_from_cstr, AsyncCompletion, AsyncCompletionFuture};
+use doom_fish_utils::completion::{AsyncCompletion, AsyncCompletionFuture};
 use doom_fish_utils::panic_safe::catch_user_panic;
 use serde::Deserialize;
 
@@ -63,7 +64,7 @@ use crate::ffi;
 use crate::image_analysis::ImageAnalysis;
 use crate::image_analyzer::{ImageAnalyzerConfiguration, ImageOrientation};
 use crate::live_text_interaction::LiveTextInteraction;
-use crate::private::{json_cstring, path_to_cstring};
+use crate::private::{error_for_status, json_cstring, path_to_cstring};
 
 // ============================================================================
 // AnalysisSubjectBounds
@@ -103,31 +104,62 @@ unsafe fn cstring_result_to_string(ptr: *const c_void) -> String {
         .map_or_else(|_| String::new(), str::to_owned)
 }
 
+unsafe fn async_error(status: i32, error: *const c_char) -> VisionKitError {
+    let message = if error.is_null() {
+        format!("Swift bridge call failed with status code {status}")
+    } else {
+        CStr::from_ptr(error).to_string_lossy().into_owned()
+    };
+    error_for_status(status, message)
+}
+
 // ============================================================================
 // AsyncImageAnalyzer
 // ============================================================================
 
-extern "C" fn analyze_cb(result: *const c_void, error: *const i8, ctx: *mut c_void) {
+struct AnalysisToken(*mut c_void);
+
+unsafe impl Send for AnalysisToken {}
+
+impl AnalysisToken {
+    fn into_analysis(self) -> ImageAnalysis {
+        let token = ManuallyDrop::new(self);
+        ImageAnalysis::from_token(token.0)
+    }
+}
+
+impl Drop for AnalysisToken {
+    fn drop(&mut self) {
+        unsafe { ffi::image_analysis::vk_image_analysis_release(self.0) };
+    }
+}
+
+type AnalysisOutcome = Result<AnalysisToken, VisionKitError>;
+
+unsafe extern "C" fn analyze_cb(
+    result: *const c_void,
+    status: i32,
+    error: *const c_char,
+    ctx: *mut c_void,
+) {
     catch_user_panic("visionkit::analyze_cb", move || {
-        if !error.is_null() {
-            let msg = unsafe { error_from_cstr(error) };
-            unsafe { AsyncCompletion::<ImageAnalysis>::complete_err(ctx, msg) };
-        } else if !result.is_null() {
-            // result is a retained VKImageAnalysisBox pointer
-            let analysis = ImageAnalysis::from_token(result.cast_mut());
-            unsafe { AsyncCompletion::complete_ok(ctx, analysis) };
+        let outcome: AnalysisOutcome = if status != ffi::status::OK {
+            Err(unsafe { async_error(status, error) })
+        } else if result.is_null() {
+            Err(VisionKitError::Unknown(
+                "Swift bridge returned no image analysis".to_owned(),
+            ))
         } else {
-            unsafe {
-                AsyncCompletion::<ImageAnalysis>::complete_err(ctx, "Unknown error".into());
-            };
-        }
+            Ok(AnalysisToken(result.cast_mut()))
+        };
+        unsafe { AsyncCompletion::complete_ok(ctx, outcome) };
     });
 }
 
 /// Future returned by [`AsyncImageAnalyzer::analyze_image_at_path`].
 #[must_use = "futures do nothing unless polled"]
 pub struct AnalyzeImageFuture {
-    inner: AsyncCompletionFuture<ImageAnalysis>,
+    inner: AsyncCompletionFuture<AnalysisOutcome>,
 }
 
 impl std::fmt::Debug for AnalyzeImageFuture {
@@ -140,9 +172,11 @@ impl Future for AnalyzeImageFuture {
     type Output = Result<ImageAnalysis, VisionKitError>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        Pin::new(&mut self.inner)
-            .poll(cx)
-            .map(|r| r.map_err(VisionKitError::Unknown))
+        Pin::new(&mut self.inner).poll(cx).map(|result| {
+            result
+                .map_err(VisionKitError::Unknown)
+                .and_then(|outcome| outcome.map(AnalysisToken::into_analysis))
+        })
     }
 }
 
@@ -234,38 +268,32 @@ impl AsyncImageAnalyzer {
 // AsyncOverlaySubjects
 // ============================================================================
 
-extern "C" fn subjects_cb(result: *const c_void, error: *const i8, ctx: *mut c_void) {
-    catch_user_panic("visionkit::subjects_cb", move || {
-        if !error.is_null() {
-            let msg = unsafe { error_from_cstr(error) };
-            unsafe { AsyncCompletion::<String>::complete_err(ctx, msg) };
-        } else if !result.is_null() {
-            let json = unsafe { cstring_result_to_string(result) };
-            unsafe { AsyncCompletion::complete_ok(ctx, json) };
-        } else {
-            unsafe { AsyncCompletion::<String>::complete_err(ctx, "Unknown error".into()) };
-        }
-    });
-}
+type JsonOutcome = Result<String, VisionKitError>;
 
-extern "C" fn subject_at_cb(result: *const c_void, error: *const i8, ctx: *mut c_void) {
-    catch_user_panic("visionkit::subject_at_cb", move || {
-        if !error.is_null() {
-            let msg = unsafe { error_from_cstr(error) };
-            unsafe { AsyncCompletion::<String>::complete_err(ctx, msg) };
-        } else if !result.is_null() {
-            let json = unsafe { cstring_result_to_string(result) };
-            unsafe { AsyncCompletion::complete_ok(ctx, json) };
+unsafe extern "C" fn subject_json_cb(
+    result: *const c_void,
+    status: i32,
+    error: *const c_char,
+    ctx: *mut c_void,
+) {
+    catch_user_panic("visionkit::subject_json_cb", move || {
+        let outcome: JsonOutcome = if status != ffi::status::OK {
+            Err(unsafe { async_error(status, error) })
+        } else if result.is_null() {
+            Err(VisionKitError::Unknown(
+                "Swift bridge returned no subject payload".to_owned(),
+            ))
         } else {
-            unsafe { AsyncCompletion::<String>::complete_err(ctx, "Unknown error".into()) };
-        }
+            Ok(unsafe { cstring_result_to_string(result) })
+        };
+        unsafe { AsyncCompletion::complete_ok(ctx, outcome) };
     });
 }
 
 /// Future returned by [`AsyncOverlaySubjects::subjects`].
 #[must_use = "futures do nothing unless polled"]
 pub struct SubjectsFuture {
-    inner: AsyncCompletionFuture<String>,
+    inner: AsyncCompletionFuture<JsonOutcome>,
 }
 
 impl std::fmt::Debug for SubjectsFuture {
@@ -279,12 +307,11 @@ impl Future for SubjectsFuture {
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         Pin::new(&mut self.inner).poll(cx).map(|r| {
-            r.map_err(VisionKitError::Unknown).and_then(|json| {
-                serde_json::from_str::<Vec<AnalysisSubjectBounds>>(&json).map_err(|e| {
-                    VisionKitError::Unknown(format!(
-                        "failed to decode subjects JSON from Swift bridge: {e}"
-                    ))
-                })
+            let json = r.map_err(VisionKitError::Unknown)??;
+            serde_json::from_str::<Vec<AnalysisSubjectBounds>>(&json).map_err(|e| {
+                VisionKitError::Unknown(format!(
+                    "failed to decode subjects JSON from Swift bridge: {e}"
+                ))
             })
         })
     }
@@ -293,7 +320,7 @@ impl Future for SubjectsFuture {
 /// Future returned by [`AsyncOverlaySubjects::subject_at`].
 #[must_use = "futures do nothing unless polled"]
 pub struct SubjectAtFuture {
-    inner: AsyncCompletionFuture<String>,
+    inner: AsyncCompletionFuture<JsonOutcome>,
 }
 
 impl std::fmt::Debug for SubjectAtFuture {
@@ -307,12 +334,11 @@ impl Future for SubjectAtFuture {
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         Pin::new(&mut self.inner).poll(cx).map(|r| {
-            r.map_err(VisionKitError::Unknown).and_then(|json| {
-                serde_json::from_str::<Option<AnalysisSubjectBounds>>(&json).map_err(|e| {
-                    VisionKitError::Unknown(format!(
-                        "failed to decode subject-at JSON from Swift bridge: {e}"
-                    ))
-                })
+            let json = r.map_err(VisionKitError::Unknown)??;
+            serde_json::from_str::<Option<AnalysisSubjectBounds>>(&json).map_err(|e| {
+                VisionKitError::Unknown(format!(
+                    "failed to decode subject-at JSON from Swift bridge: {e}"
+                ))
             })
         })
     }
@@ -359,7 +385,7 @@ impl<'a> AsyncOverlaySubjects<'a> {
         unsafe {
             ffi::live_text_interaction::vk_live_text_overlay_subjects_async(
                 self.interaction.raw_token(),
-                subjects_cb,
+                subject_json_cb,
                 ctx,
             );
         }
@@ -377,7 +403,7 @@ impl<'a> AsyncOverlaySubjects<'a> {
                 self.interaction.raw_token(),
                 x,
                 y,
-                subject_at_cb,
+                subject_json_cb,
                 ctx,
             );
         }

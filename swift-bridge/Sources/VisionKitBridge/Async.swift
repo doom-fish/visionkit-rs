@@ -7,9 +7,34 @@ import VisionKit
 // Shared callback type used by all async thunks:
 //   arg0 – opaque result pointer. For JSON-returning thunks this is an
 //           UnsafeMutablePointer<CChar> cast to UnsafeRawPointer.
-//   arg1 – error C-string (nil on success)
-//   arg2 – Rust context pointer passed through unchanged
+//   arg1 – status code (VK_OK on success)
+//   arg2 – error C-string (nil on success)
+//   arg3 – Rust context pointer passed through unchanged
 // ============================================================================
+
+public typealias VKAsyncCallback = @convention(c) (
+    UnsafeRawPointer?,
+    Int32,
+    UnsafePointer<CChar>?,
+    UnsafeMutableRawPointer
+) -> Void
+
+func vkAsyncFail(
+    _ error: Error,
+    _ cb: VKAsyncCallback,
+    _ ctx: UnsafeMutableRawPointer
+) {
+    let status: Int32
+    let message: String
+    if let bridgeError = error as? VKBridgeError {
+        status = bridgeError.statusCode
+        message = bridgeError.description
+    } else {
+        status = vkStatus(from: error)
+        message = error.localizedDescription
+    }
+    message.withCString { cb(nil, status, $0, ctx) }
+}
 
 // ============================================================================
 // ImageAnalyzer.analyze(_:configuration:) async throws → ImageAnalysis
@@ -17,19 +42,23 @@ import VisionKit
 
 /// Async thunk for `ImageAnalyzer.analyze(imageAt:orientation:configuration:)`.
 ///
-/// Fires `cb(retained VKImageAnalysisBox ptr, nil, ctx)` on success,
-/// or `cb(nil, error C-string, ctx)` on failure.
+/// Fires `cb(retained VKImageAnalysisBox ptr, VK_OK, nil, ctx)` on success,
+/// or `cb(nil, status, error C-string, ctx)` on failure.
 @_cdecl("vk_image_analyzer_analyze_image_async")
 public func vk_image_analyzer_analyze_image_async(
     _ token: UnsafeMutableRawPointer?,
     _ path: UnsafePointer<CChar>?,
     _ orientationRaw: UInt32,
     _ configurationJson: UnsafePointer<CChar>?,
-    _ cb: @convention(c) (UnsafeRawPointer?, UnsafePointer<CChar>?, UnsafeMutableRawPointer) -> Void,
+    _ cb: VKAsyncCallback,
     _ ctx: UnsafeMutableRawPointer
 ) {
     guard #available(macOS 13.0, *) else {
-        "ImageAnalyzer requires macOS 13+".withCString { cb(nil, $0, ctx) }
+        vkAsyncFail(
+            VKBridgeError.unavailableOnThisMacOS("ImageAnalyzer requires macOS 13+"),
+            cb,
+            ctx
+        )
         return
     }
     // Copy C strings synchronously — Rust may free them as soon as we return.
@@ -39,23 +68,27 @@ public func vk_image_analyzer_analyze_image_async(
     // Validate eagerly and synchronously so that error futures resolve without
     // waiting for the analysis Task.
     guard ImageAnalyzer.isSupported else {
-        VKBridgeError.analyzerNotSupported("ImageAnalyzer is not supported on this Mac")
-            .description.withCString { cb(nil, $0, ctx) }
+        vkAsyncFail(
+            VKBridgeError.analyzerNotSupported("ImageAnalyzer is not supported on this Mac"),
+            cb,
+            ctx
+        )
         return
     }
     guard let rawPath = pathStr else {
-        VKBridgeError.invalidArgument("missing path")
-            .description.withCString { cb(nil, $0, ctx) }
+        vkAsyncFail(VKBridgeError.invalidArgument("missing path"), cb, ctx)
         return
     }
     guard FileManager.default.fileExists(atPath: rawPath) else {
-        VKBridgeError.invalidArgument("file does not exist at path: \(rawPath)")
-            .description.withCString { cb(nil, $0, ctx) }
+        vkAsyncFail(
+            VKBridgeError.invalidArgument("file does not exist at path: \(rawPath)"),
+            cb,
+            ctx
+        )
         return
     }
     guard let cfgString = cfgStr else {
-        VKBridgeError.invalidArgument("missing configuration JSON")
-            .description.withCString { cb(nil, $0, ctx) }
+        vkAsyncFail(VKBridgeError.invalidArgument("missing configuration JSON"), cb, ctx)
         return
     }
 
@@ -66,11 +99,8 @@ public func vk_image_analyzer_analyze_image_async(
         box = try vkImageAnalyzerBox(token)
         orientation = try vkImageOrientation(from: orientationRaw)
         configuration = try cfgString.withCString { try vkAnalyzerConfiguration(from: $0) }
-    } catch let error as VKBridgeError {
-        error.description.withCString { cb(nil, $0, ctx) }
-        return
     } catch {
-        error.localizedDescription.withCString { cb(nil, $0, ctx) }
+        vkAsyncFail(error, cb, ctx)
         return
     }
 
@@ -82,11 +112,9 @@ public func vk_image_analyzer_analyze_image_async(
                 orientation: orientation,
                 configuration: configuration
             )
-            cb(vkRetain(VKImageAnalysisBox(analysis: analysis)), nil, capturedCtx)
-        } catch let error as VKBridgeError {
-            error.description.withCString { cb(nil, $0, capturedCtx) }
+            cb(vkRetain(VKImageAnalysisBox(analysis: analysis)), VK_OK, nil, capturedCtx)
         } catch {
-            error.localizedDescription.withCString { cb(nil, $0, capturedCtx) }
+            vkAsyncFail(error, cb, capturedCtx)
         }
     }
 }
@@ -118,27 +146,28 @@ private struct VKSubjectBoundsPayload: Codable {
 /// On macOS the subject APIs live on `ImageAnalysisOverlayView`
 /// (Rust: `LiveTextInteraction`), not on `ImageAnalysis`.
 ///
-/// Fires `cb(json_ptr, nil, ctx)` on success where the result pointer is a
+/// Fires `cb(json_ptr, VK_OK, nil, ctx)` on success where the result pointer is a
 /// JSON-encoded array of `{"x":…,"y":…,"width":…,"height":…}` objects
-/// (one per subject). Fires `cb(nil, error C-string, ctx)` on failure.
+/// (one per subject). Fires `cb(nil, status, error C-string, ctx)` on failure.
 @_cdecl("vk_live_text_overlay_subjects_async")
 public func vk_live_text_overlay_subjects_async(
     _ token: UnsafeMutableRawPointer?,
-    _ cb: @convention(c) (UnsafeRawPointer?, UnsafePointer<CChar>?, UnsafeMutableRawPointer) -> Void,
+    _ cb: VKAsyncCallback,
     _ ctx: UnsafeMutableRawPointer
 ) {
     guard #available(macOS 13.0, *) else {
-        "LiveTextInteraction requires macOS 13+".withCString { cb(nil, $0, ctx) }
+        vkAsyncFail(
+            VKBridgeError.unavailableOnThisMacOS("LiveTextInteraction requires macOS 13+"),
+            cb,
+            ctx
+        )
         return
     }
     let box: VKLiveTextInteractionBox
     do {
         box = try vkLiveTextInteractionBox(token)
-    } catch let error as VKBridgeError {
-        error.description.withCString { cb(nil, $0, ctx) }
-        return
     } catch {
-        error.localizedDescription.withCString { cb(nil, $0, ctx) }
+        vkAsyncFail(error, cb, ctx)
         return
     }
     let capturedCtx = ctx
@@ -157,12 +186,10 @@ public func vk_live_text_overlay_subjects_async(
             }
             let json = try vkEncodeJSON(payloads)
             json.withCString { ptr in
-                cb(UnsafeRawPointer(ptr), nil, capturedCtx)
+                cb(UnsafeRawPointer(ptr), VK_OK, nil, capturedCtx)
             }
-        } catch let error as VKBridgeError {
-            error.description.withCString { cb(nil, $0, capturedCtx) }
         } catch {
-            error.localizedDescription.withCString { cb(nil, $0, capturedCtx) }
+            vkAsyncFail(error, cb, capturedCtx)
         }
     }
 }
@@ -173,32 +200,33 @@ public func vk_live_text_overlay_subjects_async(
 
 /// Async thunk for `ImageAnalysisOverlayView.subject(at:)` (macOS).
 ///
-/// Fires `cb(result_ptr, nil, ctx)` on success where `result_ptr` is a
+/// Fires `cb(result_ptr, VK_OK, nil, ctx)` on success where `result_ptr` is a
 /// JSON C-string that is either:
 /// - `"null"` – no subject found at the given point, or
 /// - `{"x":…,"y":…,"width":…,"height":…}` – the bounds of the found subject.
 ///
-/// Fires `cb(nil, error C-string, ctx)` on failure.
+/// Fires `cb(nil, status, error C-string, ctx)` on failure.
 @_cdecl("vk_live_text_overlay_subject_at_async")
 public func vk_live_text_overlay_subject_at_async(
     _ token: UnsafeMutableRawPointer?,
     _ pointX: Double,
     _ pointY: Double,
-    _ cb: @convention(c) (UnsafeRawPointer?, UnsafePointer<CChar>?, UnsafeMutableRawPointer) -> Void,
+    _ cb: VKAsyncCallback,
     _ ctx: UnsafeMutableRawPointer
 ) {
     guard #available(macOS 13.0, *) else {
-        "LiveTextInteraction requires macOS 13+".withCString { cb(nil, $0, ctx) }
+        vkAsyncFail(
+            VKBridgeError.unavailableOnThisMacOS("LiveTextInteraction requires macOS 13+"),
+            cb,
+            ctx
+        )
         return
     }
     let box: VKLiveTextInteractionBox
     do {
         box = try vkLiveTextInteractionBox(token)
-    } catch let error as VKBridgeError {
-        error.description.withCString { cb(nil, $0, ctx) }
-        return
     } catch {
-        error.localizedDescription.withCString { cb(nil, $0, ctx) }
+        vkAsyncFail(error, cb, ctx)
         return
     }
     let capturedCtx = ctx
@@ -215,17 +243,15 @@ public func vk_live_text_overlay_subject_at_async(
                 )
                 let json = try vkEncodeJSON(payload)
                 json.withCString { ptr in
-                    cb(UnsafeRawPointer(ptr), nil, capturedCtx)
+                    cb(UnsafeRawPointer(ptr), VK_OK, nil, capturedCtx)
                 }
             } else {
                 "null".withCString { ptr in
-                    cb(UnsafeRawPointer(ptr), nil, capturedCtx)
+                    cb(UnsafeRawPointer(ptr), VK_OK, nil, capturedCtx)
                 }
             }
-        } catch let error as VKBridgeError {
-            error.description.withCString { cb(nil, $0, capturedCtx) }
         } catch {
-            error.localizedDescription.withCString { cb(nil, $0, capturedCtx) }
+            vkAsyncFail(error, cb, capturedCtx)
         }
     }
 }

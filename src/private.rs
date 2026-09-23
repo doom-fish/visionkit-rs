@@ -81,6 +81,10 @@ pub unsafe fn vec_from_buffer_ptr(
 pub unsafe fn error_from_status(status: i32, err_msg: *mut c_char) -> VisionKitError {
     let message = take_optional_string(err_msg)
         .unwrap_or_else(|| format!("Swift bridge call failed with status code {status}"));
+    error_for_status(status, message)
+}
+
+pub fn error_for_status(status: i32, message: String) -> VisionKitError {
     match status {
         ffi::status::INVALID_ARGUMENT => VisionKitError::InvalidArgument(message),
         ffi::status::UNAVAILABLE_ON_THIS_MACOS => VisionKitError::UnavailableOnThisMacOS(message),
@@ -95,5 +99,53 @@ pub unsafe fn error_from_status(status: i32, err_msg: *mut c_char) -> VisionKitE
             VisionKitError::LiveTextSubjectUnavailable(LiveTextSubjectUnavailable::ImageUnavailable)
         }
         _ => VisionKitError::Unknown(message),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::error_for_status;
+    use crate::error::{LiveTextSubjectUnavailable, VisionKitError};
+    use crate::ffi::status;
+
+    #[test]
+    fn statuses_map_to_typed_errors() {
+        let message = || "message".to_owned();
+        assert_eq!(
+            error_for_status(status::INVALID_ARGUMENT, message()),
+            VisionKitError::InvalidArgument(message())
+        );
+        assert_eq!(
+            error_for_status(status::UNAVAILABLE_ON_THIS_MACOS, message()),
+            VisionKitError::UnavailableOnThisMacOS(message())
+        );
+        assert_eq!(
+            error_for_status(status::UNAVAILABLE_ON_THIS_PLATFORM, message()),
+            VisionKitError::UnavailableOnThisPlatform(message())
+        );
+        assert_eq!(
+            error_for_status(status::TIMED_OUT, message()),
+            VisionKitError::TimedOut(message())
+        );
+        assert_eq!(
+            error_for_status(status::ANALYZER_NOT_SUPPORTED, message()),
+            VisionKitError::AnalyzerNotSupported(message())
+        );
+        assert_eq!(
+            error_for_status(status::FRAMEWORK_ERROR, message()),
+            VisionKitError::Framework(message())
+        );
+        assert_eq!(
+            error_for_status(status::SUBJECT_UNAVAILABLE, message()),
+            VisionKitError::LiveTextSubjectUnavailable(LiveTextSubjectUnavailable::ImageUnavailable)
+        );
+        assert_eq!(
+            error_for_status(status::UNKNOWN, message()),
+            VisionKitError::Unknown(message())
+        );
+        assert_eq!(
+            error_for_status(12345, message()),
+            VisionKitError::Unknown(message())
+        );
     }
 }

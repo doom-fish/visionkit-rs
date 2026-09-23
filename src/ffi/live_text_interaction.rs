@@ -329,7 +329,7 @@ extern "C" {
 extern "C" {
     /// True-async thunk for `ImageAnalysisOverlayView.subjects` (macOS).
     ///
-    /// Fires `cb(json_ptr, nil, ctx)` on success, where the result pointer is a
+    /// Fires `cb(json_ptr, 0, nil, ctx)` on success, where the result pointer is a
     /// JSON-encoded array of `{"x":…,"y":…,"width":…,"height":…}` objects cast
     /// to `*const c_void`.
     pub fn vk_live_text_overlay_subjects_async(
@@ -340,7 +340,7 @@ extern "C" {
 
     /// True-async thunk for `ImageAnalysisOverlayView.subject(at:)` (macOS).
     ///
-    /// Fires `cb(json_ptr, nil, ctx)` on success, where the result pointer is
+    /// Fires `cb(json_ptr, 0, nil, ctx)` on success, where the result pointer is
     /// either `"null"` (no subject) or a JSON-encoded bounds object; both cast
     /// to `*const c_void`.
     pub fn vk_live_text_overlay_subject_at_async(

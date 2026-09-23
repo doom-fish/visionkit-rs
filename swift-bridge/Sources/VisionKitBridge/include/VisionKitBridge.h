@@ -415,10 +415,11 @@ int32_t vk_recognized_item_support_json(
  * Callback signature used by every async thunk:
  *   arg0  – opaque result pointer on success; for JSON-returning thunks this
  *            is a const char* cast to const void*.
- *   arg1  – error C-string on failure, NULL on success.
- *   arg2  – Rust context pointer, passed through unchanged.
+ *   arg1  – status code: 0 on success, otherwise a negative VK_* status.
+ *   arg2  – error C-string on failure, NULL on success.
+ *   arg3  – Rust context pointer, passed through unchanged.
  * ========================================================================= */
-typedef void (*vk_async_cb)(const void *result, const char *error, void *ctx);
+typedef void (*vk_async_cb)(const void *result, int32_t status, const char *error, void *ctx);
 
 void vk_image_analyzer_analyze_image_async(
     void *token,

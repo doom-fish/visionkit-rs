@@ -14,7 +14,7 @@ use std::time::{Duration, Instant};
 
 use visionkit::async_api::{block_on, AnalysisSubjectBounds, AsyncImageAnalyzer, AsyncOverlaySubjects};
 use visionkit::{ImageAnalysisTypes, ImageAnalyzerConfiguration, ImageOrientation};
-use visionkit::LiveTextInteraction;
+use visionkit::{LiveTextInteraction, VisionKitError};
 
 struct PollCounter {
     polls: usize,
@@ -105,7 +105,10 @@ fn test_async_analyze_nonexistent_file_returns_error() {
             )
             .expect("create future")
             .await;
-        assert!(result.is_err(), "expected error for missing file, got Ok");
+        assert!(
+            matches!(result, Err(VisionKitError::InvalidArgument(_))),
+            "expected InvalidArgument for a missing file"
+        );
     });
 }
 
@@ -186,4 +189,13 @@ fn test_analysis_subject_bounds_array_json() {
     assert_eq!(subjects.len(), 2);
     assert!((subjects[0].x - 1.0).abs() < f64::EPSILON);
     assert!((subjects[1].height - 8.0).abs() < f64::EPSILON);
+}
+
+const fn assert_send<T: Send>() {}
+
+#[test]
+fn test_async_futures_are_send() {
+    assert_send::<visionkit::async_api::AnalyzeImageFuture>();
+    assert_send::<visionkit::async_api::SubjectsFuture>();
+    assert_send::<visionkit::async_api::SubjectAtFuture>();
 }

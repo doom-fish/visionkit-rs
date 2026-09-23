@@ -52,14 +52,18 @@ extern "C" {
     ) -> i32;
 }
 
-/// Async C callback type: `(result: *const c_void, error: *const i8, ctx: *mut c_void) -> ()`
-pub type VkAsyncCb =
-    unsafe extern "C" fn(result: *const c_void, error: *const i8, ctx: *mut c_void);
+/// Async C callback type: `(result: *const c_void, status: i32, error: *const c_char, ctx: *mut c_void) -> ()`
+pub type VkAsyncCb = unsafe extern "C" fn(
+    result: *const c_void,
+    status: i32,
+    error: *const c_char,
+    ctx: *mut c_void,
+);
 
 #[cfg(feature = "async")]
 extern "C" {
     /// True-async thunk for `ImageAnalyzer.analyze(imageAt:orientation:configuration:)`.
-    /// Fires `cb(retained VKImageAnalysisBox ptr, nil, ctx)` on success.
+    /// Fires `cb(retained VKImageAnalysisBox ptr, 0, nil, ctx)` on success.
     pub fn vk_image_analyzer_analyze_image_async(
         token: *mut c_void,
         path: *const c_char,
