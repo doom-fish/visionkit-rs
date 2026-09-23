@@ -14,8 +14,9 @@ impl Barcode {
     pub fn support_info() -> Result<AreaSupportInfo, VisionKitError> {
         let mut support_json: *mut c_char = ptr::null_mut();
         let mut err_msg: *mut c_char = ptr::null_mut();
-        let status =
-            unsafe { ffi::barcode::vk_barcode_support_json(&raw mut support_json, &raw mut err_msg) };
+        let status = unsafe {
+            ffi::barcode::vk_barcode_support_json(&raw mut support_json, &raw mut err_msg)
+        };
         if status == ffi::status::OK {
             unsafe { parse_area_support_info_ptr(support_json, "Barcode support info") }
         } else {

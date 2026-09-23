@@ -51,7 +51,10 @@ fn test_block_on_parks_off_the_main_thread() {
         ready_at: Instant::now() + Duration::from_millis(200),
         timer_started: false,
     });
-    assert!(polls <= 3, "block_on polled {polls} times instead of parking");
+    assert!(
+        polls <= 3,
+        "block_on polled {polls} times instead of parking"
+    );
 }
 
 fn skip_if_unsupported() -> bool {

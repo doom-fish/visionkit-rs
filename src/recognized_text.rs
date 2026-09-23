@@ -15,7 +15,10 @@ impl RecognizedText {
         let mut support_json: *mut c_char = ptr::null_mut();
         let mut err_msg: *mut c_char = ptr::null_mut();
         let status = unsafe {
-            ffi::recognized_text::vk_recognized_text_support_json(&raw mut support_json, &raw mut err_msg)
+            ffi::recognized_text::vk_recognized_text_support_json(
+                &raw mut support_json,
+                &raw mut err_msg,
+            )
         };
         if status == ffi::status::OK {
             unsafe { parse_area_support_info_ptr(support_json, "RecognizedText support info") }

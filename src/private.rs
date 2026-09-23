@@ -137,7 +137,9 @@ mod tests {
         );
         assert_eq!(
             error_for_status(status::SUBJECT_UNAVAILABLE, message()),
-            VisionKitError::LiveTextSubjectUnavailable(LiveTextSubjectUnavailable::ImageUnavailable)
+            VisionKitError::LiveTextSubjectUnavailable(
+                LiveTextSubjectUnavailable::ImageUnavailable
+            )
         );
         assert_eq!(
             error_for_status(status::UNKNOWN, message()),

@@ -1468,7 +1468,13 @@ where
     let mut width = 0.0;
     let mut height = 0.0;
     let mut err_msg: *mut c_char = ptr::null_mut();
-    let status = call(&raw mut x, &raw mut y, &raw mut width, &raw mut height, &raw mut err_msg);
+    let status = call(
+        &raw mut x,
+        &raw mut y,
+        &raw mut width,
+        &raw mut height,
+        &raw mut err_msg,
+    );
     if status == ffi::status::OK {
         Ok(Rect {
             x,
@@ -1491,7 +1497,13 @@ where
     let mut width = 0.0;
     let mut height = 0.0;
     let mut err_msg: *mut c_char = ptr::null_mut();
-    let status = call(&raw mut bytes, &raw mut len, &raw mut width, &raw mut height, &raw mut err_msg);
+    let status = call(
+        &raw mut bytes,
+        &raw mut len,
+        &raw mut width,
+        &raw mut height,
+        &raw mut err_msg,
+    );
     if status == ffi::status::OK {
         Ok(LiveTextImageData {
             size: Size { width, height },

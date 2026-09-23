@@ -31,7 +31,10 @@ fn analysis_off_main_fails_fast_without_a_main_run_loop() -> Result<(), Box<dyn 
     assert!(started.elapsed() < Duration::from_secs(30));
     match result {
         Err(VisionKitError::TimedOut(message)) => assert!(message.contains("main thread")),
-        other => panic!("expected a main-thread timeout, got {:?}", other.map(|_| ())),
+        other => panic!(
+            "expected a main-thread timeout, got {:?}",
+            other.map(|_| ())
+        ),
     }
     Ok(())
 }
