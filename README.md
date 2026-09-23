@@ -4,6 +4,22 @@ Safe Rust bindings for Apple's `VisionKit.framework` on macOS.
 
 > **Status:** wraps the macOS `ImageAnalyzer`, `ImageAnalysis`, and `ImageAnalysisOverlayView` surface; four rows are partial (see [`COVERAGE.md`](COVERAGE.md)). The iOS-only areas are availability metadata only.
 
+## Installation
+
+```toml
+[dependencies]
+visionkit-rs = "0.4"
+```
+
+The library is imported as `visionkit`. Optional features:
+
+- `async`: executor-agnostic futures in `visionkit::async_api`.
+- `apple-cf`: analyze in-memory `apple_cf::cg::CGImage` and `apple_cf::cv::CVPixelBuffer` values.
+
+```toml
+visionkit-rs = { version = "0.4", features = ["async", "apple-cf"] }
+```
+
 ## Quick start
 
 ```rust,no_run
@@ -36,7 +52,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Async API (`async` feature)
 
-Enable with `visionkit = { version = "0.3", features = ["async"] }`.
+Enable with `visionkit-rs = { version = "0.4", features = ["async"] }`.
 
 ```rust,no_run
 use visionkit::async_api::{block_on, AsyncImageAnalyzer};
