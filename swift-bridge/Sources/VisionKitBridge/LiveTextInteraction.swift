@@ -462,8 +462,13 @@ func vkStringRange(
     from payload: VKTextRangePayload,
     in text: String
 ) throws -> Range<String.Index> {
+    let (_, overflow) = payload.location.addingReportingOverflow(payload.length)
     let nsRange = NSRange(location: payload.location, length: payload.length)
-    guard let range = Range(nsRange, in: text) else {
+    guard payload.location >= 0,
+          payload.length >= 0,
+          !overflow,
+          let range = Range(nsRange, in: text)
+    else {
         throw VKBridgeError.invalidArgument(
             "invalid selected range (location=\(payload.location), length=\(payload.length))"
         )

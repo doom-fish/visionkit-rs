@@ -73,6 +73,10 @@ required-features = ["async"]
 name = "main_run_loop_analysis"
 harness = false
 
+[[test]]
+name = "live_text_selection_ranges"
+harness = false
+
 [profile.release]
 debug = "full"
 strip = "none"
