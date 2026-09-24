@@ -83,7 +83,7 @@ int32_t vk_image_analysis_has_results(
     char **out_error_message
 );
 
-void *vk_live_text_content_view_new(void);
+int32_t vk_live_text_content_view_new(void **out_token, char **out_error_message);
 void vk_live_text_content_view_release(void *token);
 int32_t vk_live_text_content_view_frame(
     void *token,
@@ -102,7 +102,7 @@ int32_t vk_live_text_content_view_set_frame(
     char **out_error_message
 );
 
-void *vk_live_text_tracking_image_view_new(void);
+int32_t vk_live_text_tracking_image_view_new(void **out_token, char **out_error_message);
 void vk_live_text_tracking_image_view_release(void *token);
 int32_t vk_live_text_tracking_image_view_frame(
     void *token,
@@ -133,7 +133,7 @@ int32_t vk_live_text_tracking_image_view_image_size(
     char **out_error_message
 );
 
-void *vk_live_text_interaction_delegate_new(void);
+int32_t vk_live_text_interaction_delegate_new(void **out_token, char **out_error_message);
 void vk_live_text_interaction_delegate_release(void *token);
 int32_t vk_live_text_interaction_delegate_config_json(
     void *token,
@@ -183,8 +183,12 @@ int32_t vk_live_text_subject_png_data(
     char **out_error_message
 );
 
-void *vk_live_text_interaction_new(void);
-void *vk_live_text_interaction_new_with_delegate(void *delegate_token);
+int32_t vk_live_text_interaction_new(void **out_token, char **out_error_message);
+int32_t vk_live_text_interaction_new_with_delegate(
+    void *delegate_token,
+    void **out_token,
+    char **out_error_message
+);
 void vk_live_text_interaction_release(void *token);
 int32_t vk_live_text_interaction_set_analysis(
     void *token,

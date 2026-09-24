@@ -12,9 +12,9 @@ use std::task::{Context, Poll};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use visionkit::async_api::{block_on, AnalysisSubjectBounds, AsyncImageAnalyzer, AsyncOverlaySubjects};
+use visionkit::async_api::{block_on, AnalysisSubjectBounds, AsyncImageAnalyzer};
 use visionkit::{ImageAnalysisTypes, ImageAnalyzerConfiguration, ImageOrientation};
-use visionkit::{LiveTextInteraction, VisionKitError};
+use visionkit::VisionKitError;
 
 struct PollCounter {
     polls: usize,
@@ -112,53 +112,6 @@ fn test_async_analyze_nonexistent_file_returns_error() {
             matches!(result, Err(VisionKitError::InvalidArgument(_))),
             "expected InvalidArgument for a missing file"
         );
-    });
-}
-
-// ============================================================================
-// AsyncOverlaySubjects.subjects – returns Vec (possibly empty)
-// ============================================================================
-
-/// Requires `ImageAnalysisOverlayView.subjects` to resolve on a view with a
-/// loaded analysis attached to a live `NSWindow` — not available in headless tests.
-/// Run with `cargo test -- --ignored` in a windowed context.
-#[test]
-#[ignore = "requires live NSWindow with loaded analysis"]
-fn test_async_overlay_subjects_returns_vec() {
-    let Ok(interaction) = LiveTextInteraction::new() else {
-        eprintln!("[skip] LiveTextInteraction not available");
-        return;
-    };
-    block_on(async {
-        let overlay = AsyncOverlaySubjects::new(&interaction);
-        let subjects = overlay.subjects().await.expect("subjects future");
-        for s in &subjects {
-            assert!(s.width >= 0.0, "subject width should be non-negative");
-            assert!(s.height >= 0.0, "subject height should be non-negative");
-        }
-    });
-}
-
-// ============================================================================
-// AsyncOverlaySubjects.subject_at – returns Option
-// ============================================================================
-
-/// Same headless-test limitation as `test_async_overlay_subjects_returns_vec`.
-#[test]
-#[ignore = "requires live NSWindow with loaded analysis"]
-fn test_async_overlay_subject_at_returns_option() {
-    let Ok(interaction) = LiveTextInteraction::new() else {
-        eprintln!("[skip] LiveTextInteraction not available");
-        return;
-    };
-    block_on(async {
-        let overlay = AsyncOverlaySubjects::new(&interaction);
-        let result = overlay.subject_at(0.0, 0.0).await;
-        assert!(result.is_ok(), "subject_at should succeed");
-        if let Ok(Some(s)) = result {
-            assert!(s.width >= 0.0);
-            assert!(s.height >= 0.0);
-        }
     });
 }
 

@@ -440,13 +440,10 @@ impl Drop for LiveTextContentView {
 impl LiveTextContentView {
     /// Creates the VisionKit `LiveTextContentView` wrapper.
     pub fn new() -> Result<Self, VisionKitError> {
-        let token = unsafe { ffi::live_text_interaction::vk_live_text_content_view_new() };
-        if token.is_null() {
-            return Err(VisionKitError::Unknown(
-                "failed to allocate LiveTextContentView".to_owned(),
-            ));
-        }
-        Ok(Self { token })
+        construct_token(|out_token, out_error_message| unsafe {
+            ffi::live_text_interaction::vk_live_text_content_view_new(out_token, out_error_message)
+        })
+        .map(Self::from_token)
     }
 
     /// Returns the VisionKit frame value.
@@ -510,13 +507,13 @@ impl Drop for LiveTextTrackingImageView {
 impl LiveTextTrackingImageView {
     /// Creates the VisionKit `LiveTextTrackingImageView` wrapper.
     pub fn new() -> Result<Self, VisionKitError> {
-        let token = unsafe { ffi::live_text_interaction::vk_live_text_tracking_image_view_new() };
-        if token.is_null() {
-            return Err(VisionKitError::Unknown(
-                "failed to allocate LiveTextTrackingImageView".to_owned(),
-            ));
-        }
-        Ok(Self { token })
+        construct_token(|out_token, out_error_message| unsafe {
+            ffi::live_text_interaction::vk_live_text_tracking_image_view_new(
+                out_token,
+                out_error_message,
+            )
+        })
+        .map(Self::from_token)
     }
 
     /// Returns the VisionKit frame value.
@@ -616,13 +613,13 @@ impl Drop for LiveTextInteractionDelegate {
 impl LiveTextInteractionDelegate {
     /// Creates the VisionKit `LiveTextInteractionDelegate` wrapper.
     pub fn new() -> Result<Self, VisionKitError> {
-        let token = unsafe { ffi::live_text_interaction::vk_live_text_interaction_delegate_new() };
-        if token.is_null() {
-            return Err(VisionKitError::UnavailableOnThisMacOS(
-                "LiveTextInteractionDelegate requires macOS 13+".to_owned(),
-            ));
-        }
-        Ok(Self { token })
+        construct_token(|out_token, out_error_message| unsafe {
+            ffi::live_text_interaction::vk_live_text_interaction_delegate_new(
+                out_token,
+                out_error_message,
+            )
+        })
+        .map(Self::from_token)
     }
 
     /// Returns whether VisionKit should begin.
@@ -852,13 +849,10 @@ impl Drop for LiveTextInteraction {
 impl LiveTextInteraction {
     /// Creates the VisionKit `LiveTextInteraction` wrapper.
     pub fn new() -> Result<Self, VisionKitError> {
-        let token = unsafe { ffi::live_text_interaction::vk_live_text_interaction_new() };
-        if token.is_null() {
-            return Err(VisionKitError::UnavailableOnThisMacOS(
-                "LiveTextInteraction requires macOS 13+".to_owned(),
-            ));
-        }
-        Ok(Self { token })
+        construct_token(|out_token, out_error_message| unsafe {
+            ffi::live_text_interaction::vk_live_text_interaction_new(out_token, out_error_message)
+        })
+        .map(|token| Self { token })
     }
 
     #[cfg(feature = "async")]
@@ -869,17 +863,14 @@ impl LiveTextInteraction {
 
     /// Creates the VisionKit live text interaction wrapper with the provided delegate.
     pub fn with_delegate(delegate: &LiveTextInteractionDelegate) -> Result<Self, VisionKitError> {
-        let token = unsafe {
+        construct_token(|out_token, out_error_message| unsafe {
             ffi::live_text_interaction::vk_live_text_interaction_new_with_delegate(
                 delegate.raw_token(),
+                out_token,
+                out_error_message,
             )
-        };
-        if token.is_null() {
-            return Err(VisionKitError::UnavailableOnThisMacOS(
-                "LiveTextInteraction requires macOS 13+".to_owned(),
-            ));
-        }
-        Ok(Self { token })
+        })
+        .map(|token| Self { token })
     }
 
     /// Sets the VisionKit analysis value.
@@ -1443,6 +1434,23 @@ where
     } else {
         Err(unsafe { error_from_status(status, err_msg) })
     }
+}
+
+fn construct_token(
+    make: impl FnOnce(*mut *mut c_void, *mut *mut c_char) -> i32,
+) -> Result<*mut c_void, VisionKitError> {
+    let mut token: *mut c_void = ptr::null_mut();
+    let mut err_msg: *mut c_char = ptr::null_mut();
+    let status = make(&raw mut token, &raw mut err_msg);
+    if status != ffi::status::OK {
+        return Err(unsafe { error_from_status(status, err_msg) });
+    }
+    if token.is_null() {
+        return Err(VisionKitError::Unknown(
+            "Swift bridge returned no object".to_owned(),
+        ));
+    }
+    Ok(token)
 }
 
 fn optional_token_call<F>(mut call: F) -> Result<Option<*mut c_void>, VisionKitError>

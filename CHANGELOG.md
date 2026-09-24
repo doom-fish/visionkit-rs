@@ -19,8 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Image analysis no longer runs inside a main-actor Task. Sync and async analysis
   run in a plain Task, and a timed-out Task is cancelled. VisionKit itself still
   finishes its work on the main queue, so an off-main synchronous call now fails
-  after 10 seconds with a `TimedOut` error naming the main thread when nothing
-  services the main queue, instead of timing out after 60 seconds.
+  after 10 seconds with `MainRunLoopNotRunning` when nothing services the main
+  queue, instead of timing out after 60 seconds.
 - `async_api::block_on` no longer spins at 100% CPU off the main thread. It parks
   until woken, and pumps the main run loop only on the main thread.
 - Async errors keep their type: the futures map the bridge status to the same
@@ -40,6 +40,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the `LiveTextInteraction` and is no longer `Send`.
 - **Breaking:** the raw async callback type `ffi::image_analyzer::VkAsyncCb` takes an
   extra `i32` status argument.
+- **Breaking:** `LiveTextInteraction`, `LiveTextInteractionDelegate`,
+  `LiveTextContentView` and `LiveTextTrackingImageView` must be created on the main
+  thread and return the new `VisionKitError::NotOnMainThread` elsewhere. Before, an
+  off-main constructor waited up to 60 s for the main actor and a timeout was reported
+  as `UnavailableOnThisMacOS`. Main-actor calls no longer hop to the main thread; they
+  return `NotOnMainThread` off it (the types are not `Send`, so this only affects the
+  raw FFI).
+- **Breaking:** the raw `vk_live_text_*_new` exports return a status and write the
+  token and an error message through out-parameters, so a missing macOS 13, a call
+  off the main thread and a timeout are distinct errors.
+- **Breaking:** an off-main analysis that finds the main queue unserviced returns the
+  new `VisionKitError::MainRunLoopNotRunning` instead of a `TimedOut` after 60 s.
 - `rust-version` is 1.82 (was 1.76), and `doom-fish-utils` is required at
   `>=0.4.1, <0.5`.
 - The iOS-only types document themselves as availability metadata, not wrappers.

@@ -27,6 +27,8 @@ pub enum VisionKitError {
     UnavailableOnThisPlatform(String),
     /// Represents a timeout reported by VisionKit.
     TimedOut(String),
+    NotOnMainThread(String),
+    MainRunLoopNotRunning(String),
     /// Represents an unsupported-analyzer error from VisionKit.
     AnalyzerNotSupported(String),
     /// Represents a framework-level error from VisionKit.
@@ -44,6 +46,8 @@ impl fmt::Display for VisionKitError {
             | Self::UnavailableOnThisMacOS(message)
             | Self::UnavailableOnThisPlatform(message)
             | Self::TimedOut(message)
+            | Self::NotOnMainThread(message)
+            | Self::MainRunLoopNotRunning(message)
             | Self::AnalyzerNotSupported(message)
             | Self::Framework(message)
             | Self::Unknown(message) => f.write_str(message),

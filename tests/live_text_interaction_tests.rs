@@ -1,5 +1,6 @@
 use std::hint::black_box;
 use std::path::PathBuf;
+use std::time::{Duration, Instant};
 
 use visionkit::prelude::*;
 
@@ -50,4 +51,30 @@ fn live_text_interaction_extended_types_are_exported() {
         VisionKitError,
     > = LiveTextInteraction::image_for_subjects;
     black_box(image_for_subjects_fn);
+}
+
+#[test]
+fn live_text_types_must_be_created_on_the_main_thread() {
+    assert_ne!(std::thread::current().name(), Some("main"));
+    if ImageAnalyzer::new().is_err() {
+        return;
+    }
+    let started = Instant::now();
+    assert!(matches!(
+        LiveTextInteraction::new(),
+        Err(VisionKitError::NotOnMainThread(_))
+    ));
+    assert!(matches!(
+        LiveTextInteractionDelegate::new(),
+        Err(VisionKitError::NotOnMainThread(_))
+    ));
+    assert!(matches!(
+        LiveTextContentView::new(),
+        Err(VisionKitError::NotOnMainThread(_))
+    ));
+    assert!(matches!(
+        LiveTextTrackingImageView::new(),
+        Err(VisionKitError::NotOnMainThread(_))
+    ));
+    assert!(started.elapsed() < Duration::from_secs(5));
 }

@@ -3,7 +3,10 @@
 use core::ffi::{c_char, c_void};
 
 extern "C" {
-    pub fn vk_live_text_content_view_new() -> *mut c_void;
+    pub fn vk_live_text_content_view_new(
+        out_token: *mut *mut c_void,
+        out_error_message: *mut *mut c_char,
+    ) -> i32;
     pub fn vk_live_text_content_view_release(token: *mut c_void);
     pub fn vk_live_text_content_view_frame(
         token: *mut c_void,
@@ -22,7 +25,10 @@ extern "C" {
         out_error_message: *mut *mut c_char,
     ) -> i32;
 
-    pub fn vk_live_text_tracking_image_view_new() -> *mut c_void;
+    pub fn vk_live_text_tracking_image_view_new(
+        out_token: *mut *mut c_void,
+        out_error_message: *mut *mut c_char,
+    ) -> i32;
     pub fn vk_live_text_tracking_image_view_release(token: *mut c_void);
     pub fn vk_live_text_tracking_image_view_frame(
         token: *mut c_void,
@@ -53,7 +59,10 @@ extern "C" {
         out_error_message: *mut *mut c_char,
     ) -> i32;
 
-    pub fn vk_live_text_interaction_delegate_new() -> *mut c_void;
+    pub fn vk_live_text_interaction_delegate_new(
+        out_token: *mut *mut c_void,
+        out_error_message: *mut *mut c_char,
+    ) -> i32;
     pub fn vk_live_text_interaction_delegate_release(token: *mut c_void);
     pub fn vk_live_text_interaction_delegate_config_json(
         token: *mut c_void,
@@ -103,8 +112,15 @@ extern "C" {
         out_error_message: *mut *mut c_char,
     ) -> i32;
 
-    pub fn vk_live_text_interaction_new() -> *mut c_void;
-    pub fn vk_live_text_interaction_new_with_delegate(delegate_token: *mut c_void) -> *mut c_void;
+    pub fn vk_live_text_interaction_new(
+        out_token: *mut *mut c_void,
+        out_error_message: *mut *mut c_char,
+    ) -> i32;
+    pub fn vk_live_text_interaction_new_with_delegate(
+        delegate_token: *mut c_void,
+        out_token: *mut *mut c_void,
+        out_error_message: *mut *mut c_char,
+    ) -> i32;
     pub fn vk_live_text_interaction_release(token: *mut c_void);
     pub fn vk_live_text_interaction_set_analysis(
         token: *mut c_void,

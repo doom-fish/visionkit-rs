@@ -92,6 +92,8 @@ pub fn error_for_status(status: i32, message: String) -> VisionKitError {
             VisionKitError::UnavailableOnThisPlatform(message)
         }
         ffi::status::TIMED_OUT => VisionKitError::TimedOut(message),
+        ffi::status::NOT_MAIN_THREAD => VisionKitError::NotOnMainThread(message),
+        ffi::status::MAIN_RUN_LOOP_NOT_RUNNING => VisionKitError::MainRunLoopNotRunning(message),
         ffi::status::ANALYZER_NOT_SUPPORTED => VisionKitError::AnalyzerNotSupported(message),
         ffi::status::FRAMEWORK_ERROR => VisionKitError::Framework(message),
         ffi::status::SUBJECT_UNAVAILABLE => {
@@ -126,6 +128,14 @@ mod tests {
         assert_eq!(
             error_for_status(status::TIMED_OUT, message()),
             VisionKitError::TimedOut(message())
+        );
+        assert_eq!(
+            error_for_status(status::NOT_MAIN_THREAD, message()),
+            VisionKitError::NotOnMainThread(message())
+        );
+        assert_eq!(
+            error_for_status(status::MAIN_RUN_LOOP_NOT_RUNNING, message()),
+            VisionKitError::MainRunLoopNotRunning(message())
         );
         assert_eq!(
             error_for_status(status::ANALYZER_NOT_SUPPORTED, message()),

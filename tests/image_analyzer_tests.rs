@@ -31,8 +31,10 @@ fn analysis_off_main_without_a_main_run_loop_finishes_promptly(
     assert!(started.elapsed() < Duration::from_secs(30));
     match result {
         Ok(analysis) => assert!(analysis.has_results(ImageAnalysisTypes::TEXT)?),
-        Err(VisionKitError::TimedOut(message)) => assert!(message.contains("main thread")),
-        Err(other) => panic!("expected an analysis or a main-thread timeout, got {other:?}"),
+        Err(VisionKitError::MainRunLoopNotRunning(message)) => {
+            assert!(message.contains("main thread"));
+        }
+        Err(other) => panic!("expected an analysis or MainRunLoopNotRunning, got {other:?}"),
     }
     Ok(())
 }

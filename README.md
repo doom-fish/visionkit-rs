@@ -87,9 +87,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Threading
 
-- VisionKit finishes `ImageAnalyzer` work on the main queue, although its Swift API is not bound to the main actor. A synchronous analysis on the main thread pumps the main run loop while it waits. On any other thread it needs the main thread to run its run loop (an AppKit app, or a CLI whose main thread calls `CFRunLoopRun`). If the main queue is not serviced within 10 seconds, the call returns `VisionKitError::TimedOut` naming the main thread. Any analysis times out after 60 seconds.
+- VisionKit finishes `ImageAnalyzer` work on the main queue, although its Swift API is not bound to the main actor. A synchronous analysis on the main thread pumps the main run loop while it waits. On any other thread it needs the main thread to run its run loop (an AppKit app, or a CLI whose main thread calls `CFRunLoopRun`). If the main queue is not serviced within 10 seconds, the call returns `VisionKitError::MainRunLoopNotRunning`. Any analysis times out after 60 seconds with `VisionKitError::TimedOut`.
 - `#[tokio::main]` and other executors that block the main thread starve VisionKit. Run the executor on another thread and keep the main thread in its run loop, or call the synchronous API from the main thread.
-- `LiveTextInteraction` and its companion types wrap main-actor AppKit views. Their calls run inline on the main thread. From another thread, each call waits for the main thread (60 seconds, or 10 seconds for subject queries) and fails if the main thread does not run its run loop.
+- `LiveTextInteraction` and its companion types wrap main-actor AppKit views and must be created on the main thread: their constructors return `VisionKitError::NotOnMainThread` elsewhere. The types are not `Send`, so they stay on the main thread, and every call runs inline there. Subject queries pump the main run loop while they wait and time out after 10 seconds.
 
 ## Availability
 

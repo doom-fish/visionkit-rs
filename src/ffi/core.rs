@@ -13,6 +13,8 @@ pub mod status {
     pub const UNAVAILABLE_ON_THIS_MACOS: i32 = -2;
     pub const TIMED_OUT: i32 = -3;
     pub const UNAVAILABLE_ON_THIS_PLATFORM: i32 = -4;
+    pub const NOT_MAIN_THREAD: i32 = -5;
+    pub const MAIN_RUN_LOOP_NOT_RUNNING: i32 = -6;
     pub const ANALYZER_NOT_SUPPORTED: i32 = -10;
     pub const FRAMEWORK_ERROR: i32 = -20;
     pub const SUBJECT_UNAVAILABLE: i32 = -30;

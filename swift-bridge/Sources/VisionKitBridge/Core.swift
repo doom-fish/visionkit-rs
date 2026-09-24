@@ -7,6 +7,8 @@ let VK_INVALID_ARGUMENT: Int32 = -1
 let VK_UNAVAILABLE_ON_THIS_MACOS: Int32 = -2
 let VK_TIMED_OUT: Int32 = -3
 let VK_UNAVAILABLE_ON_THIS_PLATFORM: Int32 = -4
+let VK_NOT_MAIN_THREAD: Int32 = -5
+let VK_MAIN_RUN_LOOP_NOT_RUNNING: Int32 = -6
 let VK_ANALYZER_NOT_SUPPORTED: Int32 = -10
 let VK_FRAMEWORK_ERROR: Int32 = -20
 let VK_SUBJECT_UNAVAILABLE: Int32 = -30
@@ -54,6 +56,8 @@ enum VKBridgeError: Error, CustomStringConvertible {
     case unavailableOnThisMacOS(String)
     case unavailableOnThisPlatform(String)
     case timedOut(String)
+    case notMainThread(String)
+    case mainRunLoopNotRunning(String)
     case analyzerNotSupported(String)
     case framework(String)
     case unknown(String)
@@ -64,6 +68,8 @@ enum VKBridgeError: Error, CustomStringConvertible {
             let .unavailableOnThisMacOS(message),
             let .unavailableOnThisPlatform(message),
             let .timedOut(message),
+            let .notMainThread(message),
+            let .mainRunLoopNotRunning(message),
             let .analyzerNotSupported(message),
             let .framework(message),
             let .unknown(message):
@@ -81,6 +87,10 @@ enum VKBridgeError: Error, CustomStringConvertible {
             return VK_UNAVAILABLE_ON_THIS_PLATFORM
         case .timedOut:
             return VK_TIMED_OUT
+        case .notMainThread:
+            return VK_NOT_MAIN_THREAD
+        case .mainRunLoopNotRunning:
+            return VK_MAIN_RUN_LOOP_NOT_RUNNING
         case .analyzerNotSupported:
             return VK_ANALYZER_NOT_SUPPORTED
         case .framework:
@@ -162,7 +172,7 @@ func vkWaitForSemaphore(
                 return
             }
             if !probe.wasServiced {
-                throw VKBridgeError.timedOut(
+                throw VKBridgeError.mainRunLoopNotRunning(
                     "VisionKit \(label) needs the main thread to run its run loop, " +
                         "and the main queue was not serviced within \(Int(graceSeconds)) seconds"
                 )
@@ -218,6 +228,7 @@ public func vk_block_on_main_actor_async<T>(
     timeoutSeconds: TimeInterval = 60,
     work: @escaping @MainActor () async throws -> T
 ) throws -> T {
+    try vkRequireMainThread()
     let semaphore = DispatchSemaphore(value: 0)
     let box = VKAsyncResultBox<T>()
 
@@ -249,38 +260,37 @@ public func vk_block_on_main_actor_async<T>(
     return try result.get()
 }
 
-func vkOnMainActor<T>(
-    timeoutSeconds: TimeInterval = 60,
-    _ work: @escaping @MainActor () throws -> T
-) throws -> T {
-    if Thread.isMainThread {
-        return try MainActor.assumeIsolated {
-            try work()
-        }
-    }
-
-    let semaphore = DispatchSemaphore(value: 0)
-    let box = VKAsyncResultBox<T>()
-    Task { @MainActor in
-        do {
-            box.store(.success(try work()))
-        } catch {
-            box.store(.failure(error))
-        }
-        semaphore.signal()
-    }
-
-    let timeout = DispatchTime.now() + .milliseconds(Int(timeoutSeconds * 1_000))
-    if semaphore.wait(timeout: timeout) == .timedOut {
-        throw VKBridgeError.timedOut(
-            "VisionKit main-actor call timed out after \(Int(timeoutSeconds)) seconds"
+func vkRequireMainThread() throws {
+    guard Thread.isMainThread else {
+        throw VKBridgeError.notMainThread(
+            "LiveTextInteraction and its companion types must be created and used on the main thread"
         )
     }
+}
 
-    guard let result = box.load() else {
-        throw VKBridgeError.unknown("missing main-actor result")
+func vkOnMainActor<T>(_ work: @MainActor () throws -> T) throws -> T {
+    try vkRequireMainThread()
+    return try MainActor.assumeIsolated {
+        try work()
     }
-    return try result.get()
+}
+
+func vkWriteToken(
+    _ outToken: UnsafeMutablePointer<UnsafeMutableRawPointer?>,
+    _ outErrorMessage: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?,
+    _ make: () throws -> UnsafeMutableRawPointer
+) -> Int32 {
+    outToken.pointee = nil
+    do {
+        outToken.pointee = try make()
+        return VK_OK
+    } catch let error as VKBridgeError {
+        outErrorMessage?.pointee = vkCString(error.description)
+        return error.statusCode
+    } catch {
+        outErrorMessage?.pointee = vkCString(error.localizedDescription)
+        return vkStatus(from: error)
+    }
 }
 
 func vkEncodeJSON<T: Encodable>(_ value: T) throws -> String {

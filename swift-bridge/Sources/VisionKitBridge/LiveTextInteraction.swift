@@ -610,12 +610,17 @@ func vkWritePNGImage(
 }
 
 @_cdecl("vk_live_text_content_view_new")
-public func vk_live_text_content_view_new() -> UnsafeMutableRawPointer? {
-    guard #available(macOS 13.0, *) else {
-        return nil
-    }
-    return try? vkOnMainActor {
-        vkRetain(VKLiveTextContentViewBox())
+public func vk_live_text_content_view_new(
+    _ outToken: UnsafeMutablePointer<UnsafeMutableRawPointer?>,
+    _ outErrorMessage: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?
+) -> Int32 {
+    vkWriteToken(outToken, outErrorMessage) {
+        guard #available(macOS 13.0, *) else {
+            throw VKBridgeError.unavailableOnThisMacOS("LiveTextContentView requires macOS 13+")
+        }
+        return try vkOnMainActor {
+            vkRetain(VKLiveTextContentViewBox())
+        }
     }
 }
 
@@ -686,12 +691,19 @@ public func vk_live_text_content_view_set_frame(
 }
 
 @_cdecl("vk_live_text_tracking_image_view_new")
-public func vk_live_text_tracking_image_view_new() -> UnsafeMutableRawPointer? {
-    guard #available(macOS 13.0, *) else {
-        return nil
-    }
-    return try? vkOnMainActor {
-        vkRetain(VKLiveTextTrackingImageViewBox())
+public func vk_live_text_tracking_image_view_new(
+    _ outToken: UnsafeMutablePointer<UnsafeMutableRawPointer?>,
+    _ outErrorMessage: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?
+) -> Int32 {
+    vkWriteToken(outToken, outErrorMessage) {
+        guard #available(macOS 13.0, *) else {
+            throw VKBridgeError.unavailableOnThisMacOS(
+                "LiveTextTrackingImageView requires macOS 13+"
+            )
+        }
+        return try vkOnMainActor {
+            vkRetain(VKLiveTextTrackingImageViewBox())
+        }
     }
 }
 
@@ -826,12 +838,19 @@ public func vk_live_text_tracking_image_view_image_size(
 }
 
 @_cdecl("vk_live_text_interaction_delegate_new")
-public func vk_live_text_interaction_delegate_new() -> UnsafeMutableRawPointer? {
-    guard #available(macOS 13.0, *) else {
-        return nil
-    }
-    return try? vkOnMainActor {
-        vkRetain(VKLiveTextInteractionDelegateBox())
+public func vk_live_text_interaction_delegate_new(
+    _ outToken: UnsafeMutablePointer<UnsafeMutableRawPointer?>,
+    _ outErrorMessage: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?
+) -> Int32 {
+    vkWriteToken(outToken, outErrorMessage) {
+        guard #available(macOS 13.0, *) else {
+            throw VKBridgeError.unavailableOnThisMacOS(
+                "LiveTextInteractionDelegate requires macOS 13+"
+            )
+        }
+        return try vkOnMainActor {
+            vkRetain(VKLiveTextInteractionDelegateBox())
+        }
     }
 }
 
@@ -1071,28 +1090,37 @@ public func vk_live_text_subject_png_data(
 }
 
 @_cdecl("vk_live_text_interaction_new")
-public func vk_live_text_interaction_new() -> UnsafeMutableRawPointer? {
-    guard #available(macOS 13.0, *) else {
-        return nil
-    }
-    return try? vkOnMainActor {
-        vkRetain(VKLiveTextInteractionBox())
+public func vk_live_text_interaction_new(
+    _ outToken: UnsafeMutablePointer<UnsafeMutableRawPointer?>,
+    _ outErrorMessage: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?
+) -> Int32 {
+    vkWriteToken(outToken, outErrorMessage) {
+        guard #available(macOS 13.0, *) else {
+            throw VKBridgeError.unavailableOnThisMacOS("LiveTextInteraction requires macOS 13+")
+        }
+        return try vkOnMainActor {
+            vkRetain(VKLiveTextInteractionBox())
+        }
     }
 }
 
 @_cdecl("vk_live_text_interaction_new_with_delegate")
 public func vk_live_text_interaction_new_with_delegate(
-    _ delegateToken: UnsafeMutableRawPointer?
-) -> UnsafeMutableRawPointer? {
-    guard #available(macOS 13.0, *) else {
-        return nil
-    }
-    return try? vkOnMainActor {
-        vkRetain(
-            VKLiveTextInteractionBox(
-                delegateBox: try vkLiveTextInteractionDelegateBox(delegateToken)
+    _ delegateToken: UnsafeMutableRawPointer?,
+    _ outToken: UnsafeMutablePointer<UnsafeMutableRawPointer?>,
+    _ outErrorMessage: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?
+) -> Int32 {
+    vkWriteToken(outToken, outErrorMessage) {
+        guard #available(macOS 13.0, *) else {
+            throw VKBridgeError.unavailableOnThisMacOS("LiveTextInteraction requires macOS 13+")
+        }
+        return try vkOnMainActor {
+            vkRetain(
+                VKLiveTextInteractionBox(
+                    delegateBox: try vkLiveTextInteractionDelegateBox(delegateToken)
+                )
             )
-        )
+        }
     }
 }
 
