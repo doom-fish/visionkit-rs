@@ -27,9 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // ── Async analyze ────────────────────────────────────────────────────
         let analyzer = AsyncImageAnalyzer::new()?;
         let cfg = ImageAnalyzerConfiguration::new(
-            ImageAnalysisTypes::TEXT
-                | ImageAnalysisTypes::MACHINE_READABLE_CODE
-                | ImageAnalysisTypes::VISUAL_LOOK_UP,
+            ImageAnalysisTypes::TEXT | ImageAnalysisTypes::MACHINE_READABLE_CODE,
         );
 
         println!("Analyzing image asynchronously…");
