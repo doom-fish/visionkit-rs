@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SubjectsFuture` and `SubjectAtFuture` are now `Send`.
 - `LiveTextInteraction::set_selected_ranges` returns `InvalidArgument` for a range
   whose end overflows, instead of aborting the process.
+- `build.rs` no longer adds the toolchain's `usr/lib/swift-5.5/macosx` directory to
+  the rpath. It shadowed the SDK's `libswift_Concurrency.tbd` for the whole binary
+  and, pointing into Xcode, never helped back-deployment.
 
 ### Changed
 
