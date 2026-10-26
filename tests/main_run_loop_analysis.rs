@@ -94,7 +94,7 @@ fn in_memory_analysis_on_main() {
     assert!(!analysis
         .has_results(ImageAnalysisTypes::TEXT)
         .expect("has_results"));
-    assert!(analysis.transcript().expect("transcript").is_empty());
+    assert_eq!(analysis.transcript().expect("transcript"), "");
 
     let pixel_buffer = CVPixelBuffer::create(320, 240, 0x4247_5241).expect("pixel buffer");
     let analysis = analyzer
